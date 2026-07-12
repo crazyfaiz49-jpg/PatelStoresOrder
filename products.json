@@ -1,0 +1,2676 @@
+{
+  "products": [
+    {
+      "id": "01-umbrella-black",
+      "name": "01 Umbrella Black",
+      "category": "General",
+      "price": 135.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "02-umbrella-color",
+      "name": "02 Umbrella Color",
+      "category": "General",
+      "price": 140.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "1-l-kerba",
+      "name": "1 L KERBA",
+      "category": "KERBA",
+      "price": 15.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "10-l-kerba",
+      "name": "10 L KERBA",
+      "category": "KERBA",
+      "price": 63.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "10-l-kerba-heavy",
+      "name": "10 L KERBA HEAVY",
+      "category": "KERBA",
+      "price": 70.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "2-l-kerba",
+      "name": "2 L KERBA",
+      "category": "KERBA",
+      "price": 23.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "20-l-kerba",
+      "name": "20 L KERBA",
+      "category": "KERBA",
+      "price": 130.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "20-l-kerba-heavy",
+      "name": "20 L KERBA HEAVY",
+      "category": "KERBA",
+      "price": 123.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "5-l-kerba",
+      "name": "5 L KERBA",
+      "category": "KERBA",
+      "price": 37.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "acid-1-l",
+      "name": "ACID (1 L)",
+      "category": "CLEANING SOLUTION",
+      "price": 10.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "atta-charni-patra",
+      "name": "ATTA CHARNI (PATRA)",
+      "category": "Garna",
+      "price": 18.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "barni-nilesh-belly-1000",
+      "name": "BARNI NILESH BELLY 1000",
+      "category": "CONTAINER",
+      "price": 16.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "barni-nilesh-belly-1500",
+      "name": "BARNI NILESH BELLY 1500",
+      "category": "CONTAINER",
+      "price": 20.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "barni-nilesh-belly-500",
+      "name": "BARNI NILESH BELLY 500",
+      "category": "CONTAINER",
+      "price": 8.5,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "basket-square",
+      "name": "BASKET (SQUARE)",
+      "category": "General",
+      "price": 56.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "basket-aristo",
+      "name": "BASKET ARISTO",
+      "category": "General",
+      "price": 290.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "bhangi-jharu-plastic",
+      "name": "BHANGI JHARU PLASTIC",
+      "category": "BHANGI JHARU",
+      "price": 140.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "bhangi-jharu-wooden",
+      "name": "BHANGI JHARU WOODEN",
+      "category": "BHANGI JHARU",
+      "price": 155.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "bike-napkin-yellow-rumal",
+      "name": "BIKE NAPKIN YELLOW RUMAL",
+      "category": "General",
+      "price": 10.5,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "black-phenail-touch-cleaner-black",
+      "name": "BLACK PHENAIL TOUCH CLEANER BLACK+",
+      "category": "CLEANING SOLUTION",
+      "price": 16.5,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "bliching-water-touch-cleaner-1-l",
+      "name": "BLICHING WATER TOUCH CLEANER (1 L)",
+      "category": "CLEANING SOLUTION",
+      "price": 16.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "bottle-bubble-18-l-with-lid",
+      "name": "BOTTLE BUBBLE 18 L WITH LID",
+      "category": "General",
+      "price": 170.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "bottle-bubbles-18-lt",
+      "name": "BOTTLE BUBBLES 18 LT",
+      "category": "KERBA",
+      "price": 150.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "bottle-china-sports",
+      "name": "BOTTLE CHINA SPORTS",
+      "category": "General",
+      "price": 110.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "bottle-kp-java-500-p-p",
+      "name": "BOTTLE KP JAVA 500 P.P.",
+      "category": "BOTTLE",
+      "price": 8.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "bottle-kp-rolex-0600",
+      "name": "BOTTLE KP ROLEX 0600",
+      "category": "BOTTLE",
+      "price": 21.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "bottle-nilesh-alpha-aqua-diamond",
+      "name": "BOTTLE NILESH ALPHA/AQUA DIAMOND",
+      "category": "BOTTLE",
+      "price": 20.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "bottle-nilesh-alpha-aqua-sada",
+      "name": "BOTTLE NILESH ALPHA/AQUA SADA",
+      "category": "BOTTLE",
+      "price": 18.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "bottle-nilesh-nitro-6-pcs-pouch",
+      "name": "BOTTLE NILESH NITRO (6 PCS POUCH)",
+      "category": "BOTTLE",
+      "price": 96.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "bottle-prime-pet-6-in-1-ss-cap-print",
+      "name": "BOTTLE PRIME PET 6 IN 1 SS CAP PRINT",
+      "category": "BOTTLE",
+      "price": 192.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "bottle-prime-pet-aqua-slim-4-pcs-set",
+      "name": "BOTTLE PRIME PET AQUA SLIM ( 4 PCS SET)",
+      "category": "BOTTLE",
+      "price": 131.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "bottle-shivam-20-lt-bubbles-with-nal",
+      "name": "BOTTLE SHIVAM 20 LT BUBBLES WITH NAL",
+      "category": "BOTTLE",
+      "price": 200.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "bottle-supremeware-rado-p-c-cap-net-6-pcs",
+      "name": "BOTTLE SUPREMEWARE RADO P.C. CAP NET (6 PCS)",
+      "category": "BOTTLE",
+      "price": 135.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "bowl-jimit-fresh-no-3-6-pcs-set",
+      "name": "BOWL JIMIT FRESH NO 3 ( 6 PCS SET )",
+      "category": "DOORMATE",
+      "price": 90.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "broom-abc-makai",
+      "name": "BROOM ABC MAKAI",
+      "category": "BROOM",
+      "price": 35.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "broom-aristo-gemini-no-dust-broom-xl",
+      "name": "BROOM ARISTO GEMINI NO DUST BROOM XL",
+      "category": "BROOM",
+      "price": 100.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "broom-gold-star-jumbo",
+      "name": "BROOM GOLD STAR JUMBO",
+      "category": "BROOM",
+      "price": 55.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "broom-jb-dust-free-grass-broom",
+      "name": "BROOM JB DUST FREE GRASS BROOM",
+      "category": "BROOM",
+      "price": 50.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "broom-rbc-jammuu-super-clean",
+      "name": "BROOM RBC JAMMUU SUPER CLEAN",
+      "category": "BROOM",
+      "price": 60.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "broom-royal",
+      "name": "BROOM ROYAL",
+      "category": "BROOM",
+      "price": 45.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "broom-ske-dust-clean",
+      "name": "BROOM SKE DUST CLEAN",
+      "category": "BROOM",
+      "price": 45.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "brush-goyal-6-pvc-patla-black",
+      "name": "BRUSH GOYAL 6 PVC PATLA BLACK",
+      "category": "KAPDA BRUSH",
+      "price": 9.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "brush-kapda",
+      "name": "BRUSH KAPDA",
+      "category": "KAPDA BRUSH",
+      "price": 8.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "brush-kapda-plastic",
+      "name": "BRUSH KAPDA (PLASTIC)",
+      "category": "General",
+      "price": 14.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "brush-nath-round-zala-broom",
+      "name": "BRUSH NATH ROUND ZALA BROOM",
+      "category": "General",
+      "price": 115.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "brush-nath-zala-v-fan",
+      "name": "BRUSH NATH ZALA V FAN",
+      "category": "General",
+      "price": 115.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "brush-sr-tenny-brush-604-wooden",
+      "name": "BRUSH SR TENNY BRUSH 604 ( WOODEN )",
+      "category": "KAPDA BRUSH",
+      "price": 18.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "brush-star",
+      "name": "BRUSH STAR",
+      "category": "BOTTLE",
+      "price": 24.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "brush-star-502-plastic",
+      "name": "BRUSH STAR 502 (PLASTIC)",
+      "category": "BOTTLE",
+      "price": 15.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "brush-star-plastic-coffee-black",
+      "name": "BRUSH STAR PLASTIC COFFEE BLACK",
+      "category": "KAPDA BRUSH",
+      "price": 29.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "brush-star-plastic-grey-black",
+      "name": "BRUSH STAR PLASTIC GREY BLACK",
+      "category": "KAPDA BRUSH",
+      "price": 33.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "brush-star-plastic-grey-blue",
+      "name": "BRUSH STAR PLASTIC GREY BLUE",
+      "category": "KAPDA BRUSH",
+      "price": 34.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "brush-star-v9",
+      "name": "BRUSH STAR V9",
+      "category": "BOTTLE",
+      "price": 16.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "brush-zavoli-king",
+      "name": "BRUSH ZAVOLI KING",
+      "category": "KAPDA BRUSH",
+      "price": 24.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "bucket-gurukrupa-royal-bucket-1010-10-l",
+      "name": "BUCKET GURUKRUPA ROYAL BUCKET 1010 (10 L)",
+      "category": "BUCKET",
+      "price": 26.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "bucket-gurukrupa-royal-bucket-1012-12-l",
+      "name": "BUCKET GURUKRUPA ROYAL BUCKET 1012 (12 L)",
+      "category": "BUCKET",
+      "price": 29.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "bucket-nilkanth-3l",
+      "name": "BUCKET NILKANTH 3L",
+      "category": "BUCKET",
+      "price": 15.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "bucket-omkar-9-l-black",
+      "name": "BUCKET OMKAR 9 L (BLACK)",
+      "category": "BUCKET",
+      "price": 16.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "bucket-rajeshwari-dolphin-16-l-516",
+      "name": "BUCKET RAJESHWARI DOLPHIN 16 L (516)",
+      "category": "UNBREAKABLE BUCKET",
+      "price": 133.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "bucket-rajeshwari-ganga-20-l-520",
+      "name": "BUCKET RAJESHWARI GANGA 20 L (520)",
+      "category": "UNBREAKABLE BUCKET",
+      "price": 255.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "bucket-rajeshwari-godavari-15-l-515",
+      "name": "BUCKET RAJESHWARI GODAVARI 15 L (515)",
+      "category": "UNBREAKABLE BUCKET",
+      "price": 180.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "bucket-rajeshwari-kaveri-7-l-507",
+      "name": "BUCKET RAJESHWARI KAVERI 7 L (507)",
+      "category": "UNBREAKABLE BUCKET",
+      "price": 115.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "bucket-rajeshwari-narmada-17-l-517",
+      "name": "BUCKET RAJESHWARI NARMADA 17 L (517)",
+      "category": "UNBREAKABLE BUCKET",
+      "price": 235.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "bucket-rajeshwari-tapi-5-l-505",
+      "name": "BUCKET RAJESHWARI TAPI 5 L (505)",
+      "category": "UNBREAKABLE BUCKET",
+      "price": 77.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "bucket-rajeshwari-yamuna-10-l-510",
+      "name": "BUCKET RAJESHWARI YAMUNA 10 L (510)",
+      "category": "UNBREAKABLE BUCKET",
+      "price": 146.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "bucket-shree-sukhdev-10-l",
+      "name": "BUCKET SHREE SUKHDEV 10 L",
+      "category": "BUCKET",
+      "price": 33.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "bucket-shree-sukhdev-15-l",
+      "name": "BUCKET SHREE SUKHDEV 15 L",
+      "category": "BUCKET",
+      "price": 44.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "bucket-shree-sukhdev-20-l",
+      "name": "BUCKET SHREE SUKHDEV 20 L",
+      "category": "BUCKET",
+      "price": 58.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "bucket-sp-1005-5-l",
+      "name": "BUCKET SP 1005 (5 L)",
+      "category": "BUCKET",
+      "price": 21.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "chatai-4-6-single",
+      "name": "CHATAI 4*6 (SINGLE)",
+      "category": "CHATAI",
+      "price": 80.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "chatai-6-6",
+      "name": "CHATAI 6*6",
+      "category": "CHATAI",
+      "price": 114.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "chopper-famous-push-nova",
+      "name": "CHOPPER FAMOUS PUSH  NOVA",
+      "category": "CHOPPER",
+      "price": 119.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "chowk-camel",
+      "name": "CHOWK CAMEL",
+      "category": "General",
+      "price": 16.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "clip-mp-air-gold-cloth-clip",
+      "name": "CLIP MP AIR GOLD CLOTH CLIP",
+      "category": "CLOTH CLIP",
+      "price": 8.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "clip-rishi-clothes-pegs",
+      "name": "CLIP RISHI CLOTHES PEGS",
+      "category": "CLOTH CLIP",
+      "price": 17.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "cloth-clip-rishi",
+      "name": "CLOTH CLIP RISHI",
+      "category": "General",
+      "price": 16.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "cloth-clip-rushabh-bmw",
+      "name": "CLOTH CLIP RUSHABH BMW",
+      "category": "CLOTH CLIP",
+      "price": 34.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "cloth-clip-rushabh-brio",
+      "name": "CLOTH CLIP RUSHABH BRIO",
+      "category": "CLOTH CLIP",
+      "price": 43.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "cloth-clip-rushabh-pajero",
+      "name": "CLOTH CLIP RUSHABH PAJERO",
+      "category": "CLOTH CLIP",
+      "price": 20.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "cloth-clip-s-shree-clip-king",
+      "name": "CLOTH CLIP S.SHREE CLIP KING",
+      "category": "CLOTH CLIP",
+      "price": 15.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "cloth-hanger-altroz-6-pc-set",
+      "name": "CLOTH HANGER ALTROZ (6 PC SET)",
+      "category": "HANGER",
+      "price": 102.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "cloth-hanger-g-plast-6-pc-set-galaxy",
+      "name": "CLOTH HANGER G-PLAST (6 PC SET) GALAXY",
+      "category": "CLOTH CLIP",
+      "price": 69.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "container-heavy-daba-3-pcs-set-milki",
+      "name": "CONTAINER HEAVY DABA 3 PCS SET MILKI",
+      "category": "CONTAINER",
+      "price": 135.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "container-heavy-daba-set-6-8-11-transparent-print",
+      "name": "CONTAINER HEAVY DABA SET 6,8,11 TRANSPARENT (PRINT)",
+      "category": "CONTAINER",
+      "price": 185.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "container-heavy-store-king-05",
+      "name": "CONTAINER HEAVY STORE KING 05",
+      "category": "CONTAINER",
+      "price": 42.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "container-heavy-store-king-07",
+      "name": "CONTAINER HEAVY STORE KING 07",
+      "category": "CONTAINER",
+      "price": 55.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "container-heavy-store-king-10",
+      "name": "CONTAINER HEAVY STORE KING 10",
+      "category": "CONTAINER",
+      "price": 68.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "container-heavy-store-king-15",
+      "name": "CONTAINER HEAVY STORE KING 15",
+      "category": "CONTAINER",
+      "price": 110.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "container-heavy-store-king-20",
+      "name": "CONTAINER HEAVY STORE KING 20",
+      "category": "CONTAINER",
+      "price": 160.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "container-patel-masala-small",
+      "name": "CONTAINER PATEL MASALA SMALL",
+      "category": "General",
+      "price": 16.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "container-patel-masaliya-s-c",
+      "name": "CONTAINER PATEL MASALIYA S/C",
+      "category": "BOTTLE",
+      "price": 25.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "container-shankar-shagun-2-masala-box",
+      "name": "CONTAINER SHANKAR SHAGUN 2 (MASALA BOX)",
+      "category": "CONTAINER",
+      "price": 20.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "container-spi-anmol-masala-small-s-c",
+      "name": "CONTAINER SPI ANMOL MASALA SMALL S/C",
+      "category": "BOTTLE",
+      "price": 26.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "container-spi-oscar-1000",
+      "name": "CONTAINER SPI OSCAR 1000",
+      "category": "General",
+      "price": 20.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "container-spi-store-well-33",
+      "name": "CONTAINER SPI STORE WELL 33",
+      "category": "CONTAINER",
+      "price": 34.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "container-spi-store-well-44",
+      "name": "CONTAINER SPI STORE WELL 44",
+      "category": "CONTAINER",
+      "price": 59.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "container-spi-store-well-55",
+      "name": "CONTAINER SPI STORE WELL 55",
+      "category": "CONTAINER",
+      "price": 95.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "cutlury-stand-spi-capital",
+      "name": "CUTLURY STAND SPI CAPITAL",
+      "category": "General",
+      "price": 15.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "cutlury-stand-spi-cozy-small",
+      "name": "CUTLURY STAND SPI COZY SMALL",
+      "category": "General",
+      "price": 18.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "dish-mop-with-stick",
+      "name": "DISH MOP (WITH STICK)",
+      "category": "MOP",
+      "price": 74.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "dishwash-green-liquid-touch-cleaner-5-ltr",
+      "name": "DISHWASH GREEN LIQUID TOUCH CLEANER (5 LTR)",
+      "category": "CLEANING SOLUTION",
+      "price": 90.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "dishwash-liq-1-ltr",
+      "name": "DISHWASH LIQ 1 Ltr",
+      "category": "CLEANING SOLUTION",
+      "price": 17.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "dishwash-yellow-liquid-touch-cleaner-5-ltr",
+      "name": "DISHWASH YELLOW LIQUID TOUCH CLEANER (5 LTR)",
+      "category": "CLEANING SOLUTION",
+      "price": 90.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "doorguard",
+      "name": "DOORGUARD",
+      "category": "DOORGUARD",
+      "price": 12.5,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "doorguard-checks-design",
+      "name": "DOORGUARD CHECKS DESIGN",
+      "category": "DOORGUARD",
+      "price": 13.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "doormat-other-cotton-napkin-big-16-26",
+      "name": "DOORMAT OTHER COTTON NAPKIN BIG 16*26",
+      "category": "DOORMATE",
+      "price": 9.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "doormate-sada",
+      "name": "DOORMATE (SADA)",
+      "category": "DOORMATE",
+      "price": 18.5,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "doormate-bhupesh-welcome-38-58-prime",
+      "name": "DOORMATE BHUPESH WELCOME 38+58 PRIME",
+      "category": "General",
+      "price": 150.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "dori-dolly-plastic-12-no",
+      "name": "DORI DOLLY PLASTIC 12 NO.",
+      "category": "General",
+      "price": 7.5,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "dori-dolly-plastic-15-no",
+      "name": "DORI DOLLY PLASTIC 15 NO.",
+      "category": "General",
+      "price": 16.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "dori-shree-ganesh-ent-14-no",
+      "name": "DORI SHREE GANESH ENT 14 NO",
+      "category": "General",
+      "price": 14.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "drain-cleaner-drainon-blockage-solution",
+      "name": "DRAIN CLEANER DRAINON BLOCKAGE SOLUTION",
+      "category": "DRAINAGE POWDER",
+      "price": 12.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "drum-shree-sukhdev-deluxe-1035-35-l",
+      "name": "DRUM SHREE SUKHDEV DELUXE 1035 (35 L)",
+      "category": "BUCKET",
+      "price": 80.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "dust-bin-bag-rsf-alu-freshh-large-15-pcs",
+      "name": "DUST BIN BAG RSF ALU-FRESHH (LARGE) ( 15 PCS )",
+      "category": "DUSTBIN BAG",
+      "price": 55.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "dust-bin-bag-rsf-alu-freshh-meduim-30-pcs",
+      "name": "DUST BIN BAG RSF ALU-FRESHH (MEDUIM) ( 30 PCS )",
+      "category": "DUSTBIN BAG",
+      "price": 41.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "dust-bin-bag-rsf-alu-freshh-small-30-pcs",
+      "name": "DUST BIN BAG RSF ALU-FRESHH (SMALL) (30 PCS)",
+      "category": "DUSTBIN BAG",
+      "price": 35.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "dust-bin-bag-rsf-alu-freshh-xl-15-pcs",
+      "name": "DUST BIN BAG RSF ALU-FRESHH (XL) ( 15 PCS )",
+      "category": "DUSTBIN BAG",
+      "price": 102.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "dustbin-80l",
+      "name": "DUSTBIN 80L",
+      "category": "General",
+      "price": 800.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "dustbin-nilkanth-jumbo",
+      "name": "DUSTBIN NILKANTH JUMBO",
+      "category": "DUSTBIN",
+      "price": 56.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "dustbin-nilkanth-mini",
+      "name": "DUSTBIN NILKANTH MINI",
+      "category": "DUSTBIN",
+      "price": 27.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "dustbin-nilkanth-regular",
+      "name": "DUSTBIN NILKANTH REGULAR",
+      "category": "DUSTBIN",
+      "price": 39.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "earbuds-wooden",
+      "name": "EARBUDS WOODEN",
+      "category": "EAR BUDS",
+      "price": 5.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "filter-gayatri-double-water-filter",
+      "name": "FILTER GAYATRI DOUBLE WATER FILTER",
+      "category": "WATER FILTER",
+      "price": 6.5,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "filter-megma-water-filter",
+      "name": "FILTER MEGMA WATER FILTER",
+      "category": "General",
+      "price": 7.5,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "floor-cleaner-touch-cleaner-5-l",
+      "name": "FLOOR CLEANER TOUCH CLEANER ( 5 L )",
+      "category": "CLEANING SOLUTION",
+      "price": 85.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "foil-paper-alu-fresh-18-meter",
+      "name": "FOIL PAPER ALU-FRESH 18 METER",
+      "category": "FOIL PAPER",
+      "price": 107.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "foil-paper-alu-fresh-9-meter",
+      "name": "FOIL PAPER ALU-FRESH 9 METER",
+      "category": "FOIL PAPER",
+      "price": 51.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "fresh-bowl-6-pcs-set",
+      "name": "FRESH BOWL ( 6 PCS SET )",
+      "category": "DOORMATE",
+      "price": 67.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "funnel-pradeep-no-05-p-p",
+      "name": "FUNNEL PRADEEP NO-05 P.P.",
+      "category": "Garna",
+      "price": 8.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "funnel-pradeep-no-06-p-p",
+      "name": "FUNNEL PRADEEP NO-06 P.P.",
+      "category": "Garna",
+      "price": 14.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "funnel-pradeep-r-p-no-06",
+      "name": "FUNNEL PRADEEP R/P NO-06",
+      "category": "FUNNEL",
+      "price": 9.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "galla-patra-big",
+      "name": "GALLA PATRA (BIG)",
+      "category": "GALLA",
+      "price": 17.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "galla-patra-medium",
+      "name": "GALLA PATRA (MEDIUM)",
+      "category": "GALLA",
+      "price": 11.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "galla-patra-small",
+      "name": "GALLA PATRA (SMALL)",
+      "category": "GALLA",
+      "price": 9.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "galla-plastic-big",
+      "name": "GALLA PLASTIC (BIG)",
+      "category": "GALLA",
+      "price": 8.5,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "galla-plastic-medium",
+      "name": "GALLA PLASTIC (MEDIUM)",
+      "category": "GALLA",
+      "price": 4.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "garna-max",
+      "name": "GARNA MAX",
+      "category": "General",
+      "price": 17.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "garna-nilesh-kitchen-strainers",
+      "name": "GARNA NILESH KITCHEN STRAINERS",
+      "category": "Garna",
+      "price": 15.5,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "garna-shivam-santro-no-6-color",
+      "name": "GARNA SHIVAM SANTRO NO. 6 (COLOR)",
+      "category": "Garna",
+      "price": 15.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "glass-cleaner-my-washbit-500-ml",
+      "name": "GLASS CLEANER MY WASHBIT (500 ML)",
+      "category": "CLEANING SOLUTION",
+      "price": 51.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "glass-cleaner-sparklin-5-l",
+      "name": "GLASS CLEANER SPARKLIN (5 L)",
+      "category": "CLEANING SOLUTION",
+      "price": 220.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "glass-set-cello-iris",
+      "name": "GLASS SET CELLO IRIS",
+      "category": "General",
+      "price": 170.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "handwash-bottle-bell-prill-250ml",
+      "name": "HANDWASH BOTTLE BELL PRILL 250ML",
+      "category": "HAND WASH BOTTLE",
+      "price": 17.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "handwash-bottle-bell-round-500ml",
+      "name": "HANDWASH BOTTLE BELL ROUND 500ML",
+      "category": "HAND WASH BOTTLE",
+      "price": 21.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "handwash-sparklin-handwash-liq-5-l",
+      "name": "HANDWASH SPARKLIN HANDWASH LIQ. (5 L)",
+      "category": "CLEANING SOLUTION",
+      "price": 186.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "handwash-touch-cleaner-its-soap-475ml",
+      "name": "HANDWASH TOUCH CLEANER ITS SOAP 475ML",
+      "category": "CLEANING SOLUTION",
+      "price": 85.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "hangers-kay-pee-wall-hangers",
+      "name": "HANGERS KAY PEE WALL HANGERS",
+      "category": "HANGER",
+      "price": 20.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "hockey-galaxy-toilet-brush-double",
+      "name": "HOCKEY GALAXY TOILET BRUSH DOUBLE",
+      "category": "TOILET BRUSH",
+      "price": 46.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "hockey-galaxyware-toilet-brush-single",
+      "name": "HOCKEY GALAXYWARE TOILET BRUSH SINGLE",
+      "category": "TOILET BRUSH",
+      "price": 36.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "hockey-nath-double",
+      "name": "HOCKEY NATH DOUBLE",
+      "category": "TOILET BRUSH",
+      "price": 60.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "hockey-nath-prime-double",
+      "name": "HOCKEY NATH PRIME DOUBLE",
+      "category": "TOILET BRUSH",
+      "price": 56.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "hockey-nath-prime-single",
+      "name": "HOCKEY NATH PRIME SINGLE",
+      "category": "TOILET BRUSH",
+      "price": 43.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "hockey-nath-single",
+      "name": "HOCKEY NATH SINGLE",
+      "category": "TOILET BRUSH",
+      "price": 48.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "hockey-toilet-brush-double",
+      "name": "HOCKEY TOILET BRUSH DOUBLE",
+      "category": "TOILET BRUSH",
+      "price": 24.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "hockey-toilet-brush-single",
+      "name": "HOCKEY TOILET BRUSH SINGLE",
+      "category": "TOILET BRUSH",
+      "price": 17.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "hook-china",
+      "name": "HOOK CHINA",
+      "category": "HANGER",
+      "price": 16.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "jar-kp-dot-flora-2000-print",
+      "name": "JAR KP DOT FLORA 2000 PRINT",
+      "category": "DOORMATE",
+      "price": 39.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "jar-yera-1-5-kg-glass-barni",
+      "name": "JAR YERA 1.5 KG ( GLASS BARNI )",
+      "category": "KACH BARNI",
+      "price": 94.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "jar-yera-2-kg-glass-barni",
+      "name": "JAR YERA 2 KG ( GLASS BARNI )",
+      "category": "KACH BARNI",
+      "price": 105.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "jar-yera-3-kg-glass-barni",
+      "name": "JAR YERA 3 KG ( GLASS BARNI )",
+      "category": "General",
+      "price": 128.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "jar-yera-5-kg-glass-barni",
+      "name": "JAR YERA 5 KG ( GLASS BARNI )",
+      "category": "KACH BARNI",
+      "price": 245.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "jug-ski-poland",
+      "name": "JUG SKI POLAND",
+      "category": "DOORMATE",
+      "price": 80.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "jug-spi-pyasa-big",
+      "name": "JUG SPI PYASA BIG",
+      "category": "JUG",
+      "price": 38.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "jug-spi-pyasa-small",
+      "name": "JUG SPI PYASA SMALL",
+      "category": "JUG",
+      "price": 21.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "karsata-big-taar",
+      "name": "KARSATA BIG ( TAAR )",
+      "category": "KARSATA",
+      "price": 36.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "karsata-big-dori",
+      "name": "KARSATA BIG (DORI)",
+      "category": "KARSATA",
+      "price": 29.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "karsata-pipe-medium",
+      "name": "KARSATA PIPE (MEDIUM)",
+      "category": "KARSATA",
+      "price": 17.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "karsata-white-pipe-medium",
+      "name": "KARSATA WHITE PIPE (MEDIUM)",
+      "category": "KARSATA",
+      "price": 50.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "katar-gold-mec",
+      "name": "KATAR GOLD MEC",
+      "category": "KATAR",
+      "price": 8.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "katar-jc-sharpcut-4-5-110mm",
+      "name": "KATAR JC SHARPCUT 4.5\"/110MM",
+      "category": "KATAR",
+      "price": 16.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "katar-jc-sharpcut-4-7-120mm",
+      "name": "KATAR JC SHARPCUT 4.7\"/120MM",
+      "category": "KATAR",
+      "price": 17.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "katar-jc-sharpcut-6-5-166mm",
+      "name": "KATAR JC SHARPCUT 6.5\"/166MM",
+      "category": "KATAR",
+      "price": 21.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "katar-jc-sharpcut-8-5-218mm",
+      "name": "KATAR JC SHARPCUT 8.5\"/218MM",
+      "category": "KATAR",
+      "price": 43.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "khajuri-jharu-double",
+      "name": "KHAJURI JHARU (DOUBLE)",
+      "category": "KHAJURI",
+      "price": 20.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "kitchen-napkin-cotton-big-16-26",
+      "name": "KITCHEN NAPKIN COTTON BIG 16*26",
+      "category": "KITCHEN KAPDA",
+      "price": 11.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "kitchen-napkin-cotton-small-18-18",
+      "name": "KITCHEN NAPKIN COTTON SMALL 18*18",
+      "category": "KITCHEN KAPDA",
+      "price": 9.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "knife-s-s-wooden-handle",
+      "name": "KNIFE S.S. WOODEN HANDLE",
+      "category": "KNIFE",
+      "price": 8.5,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "lighter-sada-big",
+      "name": "LIGHTER SADA (BIG)",
+      "category": "LIGHTER",
+      "price": 13.5,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "lighter-sada-small",
+      "name": "LIGHTER SADA (SMALL)",
+      "category": "LIGHTER",
+      "price": 9.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "lighter-steel-big",
+      "name": "LIGHTER STEEL (BIG)",
+      "category": "LIGHTER",
+      "price": 23.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "liquid-detergent-matic-touch-cleaner-5-l",
+      "name": "LIQUID DETERGENT MATIC TOUCH CLEANER ( 5 L )",
+      "category": "CLEANING SOLUTION",
+      "price": 320.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "liquid-detergent-touch-cleaner-5-l",
+      "name": "LIQUID DETERGENT TOUCH CLEANER ( 5 L )",
+      "category": "CLEANING SOLUTION",
+      "price": 165.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "lock-aaira-maxell-shutter-lock-90-mm",
+      "name": "LOCK AAIRA MAXELL SHUTTER LOCK 90 MM",
+      "category": "LOCK",
+      "price": 145.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "lock-liza-super-top-35-mm",
+      "name": "LOCK LIZA SUPER TOP 35 MM",
+      "category": "General",
+      "price": 21.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "lock-liza-super-top-50-mm",
+      "name": "LOCK LIZA SUPER TOP 50 MM",
+      "category": "General",
+      "price": 41.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "lock-liza-super-top-60-mm",
+      "name": "LOCK LIZA SUPER TOP 60 MM",
+      "category": "LOCK",
+      "price": 59.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "lock-liza-tengo-shutter-lock-75-mm",
+      "name": "LOCK LIZA TENGO SHUTTER LOCK 75 MM",
+      "category": "LOCK",
+      "price": 102.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "lock-meibao-padlock-25-mm-china",
+      "name": "LOCK MEIBAO PADLOCK 25 MM (CHINA)",
+      "category": "General",
+      "price": 17.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "lock-meibao-padlock-32-mm-china",
+      "name": "LOCK MEIBAO PADLOCK 32 MM (CHINA)",
+      "category": "General",
+      "price": 32.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "loofah-medium",
+      "name": "LOOFAH (MEDIUM)",
+      "category": "LOOFAH",
+      "price": 7.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "loofah-small",
+      "name": "LOOFAH (SMALL)",
+      "category": "LOOFAH",
+      "price": 6.5,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "lotta-aristo-badhna-3l",
+      "name": "LOTTA ARISTO (BADHNA) ( 3L )",
+      "category": "BADHANA",
+      "price": 49.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "lunch-box-medium",
+      "name": "LUNCH BOX MEDIUM",
+      "category": "General",
+      "price": 17.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "lunch-box-spi-l-s-550-tr",
+      "name": "LUNCH BOX SPI L & S 550 TR",
+      "category": "LUNCH BOX",
+      "price": 52.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "lunch-box-spi-l-s-850-tr",
+      "name": "LUNCH BOX SPI L & S 850 TR",
+      "category": "LUNCH BOX",
+      "price": 65.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "masala-dabba-spi-everest-small",
+      "name": "MASALA DABBA SPI EVEREST SMALL",
+      "category": "MASALA DABBA",
+      "price": 41.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "matka-stand-sada",
+      "name": "MATKA STAND (SADA)",
+      "category": "General",
+      "price": 17.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "mirror-large",
+      "name": "MIRROR (LARGE)",
+      "category": "MIRROR",
+      "price": 28.5,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "mirror-medium",
+      "name": "MIRROR (MEDIUM)",
+      "category": "MIRROR",
+      "price": 15.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "mirror-small",
+      "name": "MIRROR (SMALL)",
+      "category": "MIRROR",
+      "price": 8.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "mop-bansi-clip-flip-creta-9-inc-with-stick",
+      "name": "MOP BANSI CLIP & FLIP CRETA 9 INC (WITH STICK)",
+      "category": "MOP",
+      "price": 85.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "mop-century-jumbo-9-clip-color",
+      "name": "MOP CENTURY JUMBO 9 CLIP (COLOR)",
+      "category": "MOP",
+      "price": 90.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "mop-galaxy-6-clip",
+      "name": "MOP GALAXY 6 CLIP",
+      "category": "MOP",
+      "price": 66.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "mop-galaxy-9-clip",
+      "name": "MOP GALAXY 9 CLIP",
+      "category": "General",
+      "price": 79.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "mop-galaxy-clean-healthy-round",
+      "name": "MOP GALAXY CLEAN & HEALTHY ROUND",
+      "category": "MOP",
+      "price": 83.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "mop-galaxy-clip-fit-12",
+      "name": "MOP GALAXY CLIP & FIT 12\"",
+      "category": "MOP",
+      "price": 98.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "mop-galaxy-kotak-round",
+      "name": "MOP GALAXY KOTAK ROUND",
+      "category": "MOP",
+      "price": 44.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "mop-nath-clip-fit-09-inc-with-stick",
+      "name": "MOP NATH CLIP & FIT 09 INC (WITH STICK)",
+      "category": "MOP",
+      "price": 125.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "mop-nath-clip-fit-semi-09-inc-with-stick",
+      "name": "MOP NATH CLIP & FIT SEMI 09 INC (WITH STICK)",
+      "category": "MOP",
+      "price": 98.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "mop-nath-clip-fit-semi-12-inc-with-stick",
+      "name": "MOP NATH CLIP & FIT SEMI 12 INC (WITH STICK)",
+      "category": "MOP",
+      "price": 119.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "mop-nath-twist-mop-r-p",
+      "name": "MOP NATH TWIST MOP R/P",
+      "category": "MOP",
+      "price": 113.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "mop-smt-bottle-mop-cotton-with-stick",
+      "name": "MOP SMT BOTTLE MOP COTTON (WITH STICK)",
+      "category": "MOP",
+      "price": 49.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "mop-smt-classic-mop-6-with-stick",
+      "name": "MOP SMT CLASSIC MOP 6\" (WITH STICK)",
+      "category": "MOP",
+      "price": 57.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "mop-smt-easy-cotton-mop-with-stick",
+      "name": "MOP SMT EASY COTTON MOP (WITH STICK)",
+      "category": "MOP",
+      "price": 72.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "mop-smt-supremo-clip-mop-with-stick",
+      "name": "MOP SMT SUPREMO CLIP MOP (WITH STICK)",
+      "category": "MOP",
+      "price": 61.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "mug-benzo-1000",
+      "name": "MUG BENZO-1000",
+      "category": "MUG",
+      "price": 7.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "mug-nilesh-hitesh-1000",
+      "name": "MUG NILESH HITESH 1000",
+      "category": "MUG",
+      "price": 8.5,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "mug-nilesh-tulip-1000",
+      "name": "MUG NILESH TULIP 1000",
+      "category": "MUG",
+      "price": 12.5,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "mug-patel-1500-ml-virgin",
+      "name": "MUG PATEL 1500 ML (VIRGIN)",
+      "category": "MUG",
+      "price": 15.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "mug-rajeshwari-1200-ml-103",
+      "name": "MUG RAJESHWARI 1200 ML (103)",
+      "category": "UNBREAKABLE MUG",
+      "price": 38.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "mug-rajeshwari-600-ml-101",
+      "name": "MUG RAJESHWARI 600 ML (101)",
+      "category": "UNBREAKABLE MUG",
+      "price": 24.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "mug-rajeshwari-900-ml-102",
+      "name": "MUG RAJESHWARI 900 ML (102)",
+      "category": "UNBREAKABLE MUG",
+      "price": 30.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "mug-zenga-750-ml",
+      "name": "MUG ZENGA 750 ML",
+      "category": "MUG",
+      "price": 6.5,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "nail-cutter-bell",
+      "name": "NAIL CUTTER BELL",
+      "category": "NAIL CUTTER",
+      "price": 15.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "nail-cutter-v9",
+      "name": "NAIL CUTTER V9",
+      "category": "NAIL CUTTER",
+      "price": 18.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "namakdani",
+      "name": "NAMAKDANI",
+      "category": "General",
+      "price": 7.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "namakdani-arihant-2-pcs-set",
+      "name": "NAMAKDANI ARIHANT (2 PCS SET )",
+      "category": "NAMAKDANI",
+      "price": 16.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "naphthalene-ball-100g",
+      "name": "NAPHTHALENE BALL (100G)",
+      "category": "NAPHTHALENE BALLS",
+      "price": 21.5,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "naphthalene-ball-surya-small",
+      "name": "NAPHTHALENE BALL SURYA SMALL",
+      "category": "NAPHTHALENE BALLS",
+      "price": 7.5,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "napkin-boss-towels-medium",
+      "name": "NAPKIN BOSS TOWELS (MEDIUM)",
+      "category": "TOWEL",
+      "price": 19.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "napkin-cleanmart-velvet-vibe-micro-fiber-cloth",
+      "name": "NAPKIN CLEANMART VELVET VIBE MICRO FIBER CLOTH",
+      "category": "TOWEL",
+      "price": 54.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "napkin-j-j-towels-big",
+      "name": "NAPKIN J.J. TOWELS (BIG)",
+      "category": "TOWEL",
+      "price": 40.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "napkin-kitchen-kapda",
+      "name": "NAPKIN KITCHEN KAPDA",
+      "category": "DOORMATE",
+      "price": 10.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "niwar-premium-niwar-pvc",
+      "name": "NIWAR PREMIUM NIWAR (PVC)",
+      "category": "NIWAR",
+      "price": 140.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "notebook-galaxy-aron-200-page-1-pcs",
+      "name": "NOTEBOOK GALAXY ARON ( 200 PAGE ) ( 1 PCS )",
+      "category": "General",
+      "price": 83.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "notebook-galaxy-focus-136-pages-1-pcs",
+      "name": "NOTEBOOK GALAXY FOCUS (136 PAGES) ( 1 PCS )",
+      "category": "BOTTLE",
+      "price": 18.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "oil-can-gehi-no-005-250",
+      "name": "OIL CAN GEHI NO - 005 (250)",
+      "category": "OIL CAN",
+      "price": 8.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "oil-can-gehi-no-500",
+      "name": "OIL CAN GEHI NO. -500",
+      "category": "OIL CAN",
+      "price": 15.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "oil-kuppi-v-i-p-big",
+      "name": "OIL KUPPI V.I.P. (BIG)",
+      "category": "OIL CAN",
+      "price": 8.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "oil-kuppi-v-i-p-medium",
+      "name": "OIL KUPPI V.I.P. (MEDIUM)",
+      "category": "OIL CAN",
+      "price": 7.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "other-radhe-noodles-bowl",
+      "name": "OTHER RADHE NOODLES BOWL",
+      "category": "DOORMATE",
+      "price": 20.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "other-samarth-sopan-pot-stand",
+      "name": "OTHER SAMARTH SOPAN POT STAND",
+      "category": "General",
+      "price": 45.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "pati-bansi-cotton-niwar-90-mtr",
+      "name": "PATI BANSI COTTON NIWAR 90 MTR",
+      "category": "General",
+      "price": 185.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "patla-komal-diamond",
+      "name": "PATLA KOMAL (DIAMOND)",
+      "category": "PATLA",
+      "price": 45.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "patla-rr-plast-round",
+      "name": "PATLA RR PLAST (ROUND)",
+      "category": "PATLA",
+      "price": 45.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "phenyl-1-l-color",
+      "name": "PHENYL (1 L) (COLOR)",
+      "category": "CLEANING SOLUTION",
+      "price": 15.5,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "phenyl-1-l-white",
+      "name": "PHENYL (1 L) (WHITE)",
+      "category": "CLEANING SOLUTION",
+      "price": 15.5,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "phenyl-sunny-200-ml",
+      "name": "PHENYL SUNNY (200 ML)",
+      "category": "CLEANING SOLUTION",
+      "price": 42.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "phenyle-5-ltr-color",
+      "name": "PHENYLE 5 LTR (COLOR)",
+      "category": "CLEANING SOLUTION",
+      "price": 85.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "phenyle-5-ltr-white",
+      "name": "PHENYLE 5 LTR (WHITE)",
+      "category": "CLEANING SOLUTION",
+      "price": 85.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "pinjra",
+      "name": "PINJRA",
+      "category": "BOTTLE",
+      "price": 185.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "pinjra-rat-catcher",
+      "name": "PINJRA ( RAT CATCHER )",
+      "category": "General",
+      "price": 65.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "planter-lily-pot-no-9",
+      "name": "PLANTER LILY POT NO.9",
+      "category": "General",
+      "price": 16.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "planter-s-r-p-green-city-no-10",
+      "name": "PLANTER S.R.P . GREEN CITY NO.10",
+      "category": "General",
+      "price": 20.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "plastic-ball",
+      "name": "PLASTIC BALL",
+      "category": "PLASTIC BALL",
+      "price": 7.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "plastic-glass-mar-party-time-6-pcs",
+      "name": "PLASTIC GLASS MAR PARTY TIME (6 PCS)",
+      "category": "GLASS",
+      "price": 90.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "plastic-glass-mar-signature-6-pcs",
+      "name": "PLASTIC GLASS MAR SIGNATURE (6 PCS)",
+      "category": "GLASS",
+      "price": 90.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "plunger-sada",
+      "name": "PLUNGER (SADA)",
+      "category": "TOILET BRUSH",
+      "price": 42.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "plunger-galaxy-big",
+      "name": "PLUNGER GALAXY BIG",
+      "category": "PLUNGER",
+      "price": 45.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "plunger-galaxy-small",
+      "name": "PLUNGER GALAXY SMALL",
+      "category": "PLUNGER",
+      "price": 36.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "polo-nal",
+      "name": "POLO NAL",
+      "category": "NAL",
+      "price": 18.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "pota-kapda-grey",
+      "name": "POTA KAPDA (GREY)",
+      "category": "CLEANING SOLUTION",
+      "price": 13.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "pota-lakdi",
+      "name": "POTA LAKDI",
+      "category": "General",
+      "price": 17.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "radhe-popcorn-bowl",
+      "name": "RADHE POPCORN BOWL",
+      "category": "General",
+      "price": 20.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "red-acid-1l",
+      "name": "RED ACID ( 1L )",
+      "category": "CLEANING SOLUTION",
+      "price": 17.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "road-brush-clean-mart-16-inch",
+      "name": "ROAD BRUSH CLEAN MART 16 INCH",
+      "category": "ROAD BRUSH",
+      "price": 130.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "road-brush-clean-mart-jumbo-16-inch-soft",
+      "name": "ROAD BRUSH CLEAN MART JUMBO 16 INCH (SOFT)",
+      "category": "ROAD BRUSH",
+      "price": 165.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "road-brush-nath-18-inch-jumbo-hardy-broom",
+      "name": "ROAD BRUSH NATH 18 INCH JUMBO HARDY BROOM",
+      "category": "ROAD BRUSH",
+      "price": 130.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "road-brush-nath-hardy-broom-12-inch",
+      "name": "ROAD BRUSH NATH HARDY BROOM 12 INCH",
+      "category": "ROAD BRUSH",
+      "price": 85.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "room-freshner-odonil-220ml",
+      "name": "ROOM FRESHNER ODONIL 220ML",
+      "category": "ROOM SPRAY",
+      "price": 90.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "roti-patli-big",
+      "name": "ROTI PATLI (BIG)",
+      "category": "ROTI PATLI",
+      "price": 71.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "roti-patli-plastic-big",
+      "name": "ROTI PATLI PLASTIC (BIG)",
+      "category": "ROTI PATLI",
+      "price": 39.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "roti-patli-plastic-small",
+      "name": "ROTI PATLI PLASTIC (SMALL)",
+      "category": "ROTI PATLI",
+      "price": 23.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "roti-patli-small",
+      "name": "ROTI PATLI SMALL",
+      "category": "ROTI PATLI",
+      "price": 64.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "scissors",
+      "name": "SCISSORS",
+      "category": "BOTTLE",
+      "price": 17.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "scrub-bajarang-s-s-15-gm",
+      "name": "SCRUB BAJARANG S.S. (15 GM)",
+      "category": "SCRUB",
+      "price": 7.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "scrub-bajarang-s-s-35-gm",
+      "name": "SCRUB BAJARANG S.S. (35 GM)",
+      "category": "SCRUB",
+      "price": 13.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "scrub-pearl-s-scrubby",
+      "name": "SCRUB PEARL'S SCRUBBY",
+      "category": "SCRUBBER",
+      "price": 10.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "scrub-pooja-s-s-goti-40-gm",
+      "name": "SCRUB POOJA S.S. GOTI 40 GM",
+      "category": "SCRUB",
+      "price": 14.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "scrub-r-k-clean-shine-s-s-patta",
+      "name": "SCRUB R K CLEAN & SHINE S.S. (PATTA)",
+      "category": "SCRUB",
+      "price": 66.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "scrub-raizo-priyanshi-black",
+      "name": "SCRUB RAIZO PRIYANSHI (BLACK)",
+      "category": "SCRUBBER",
+      "price": 7.5,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "scrub-seven-star",
+      "name": "SCRUB SEVEN STAR",
+      "category": "SCRUBBER",
+      "price": 8.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "scrubber-rtc-patel-scouring-pad",
+      "name": "SCRUBBER RTC PATEL SCOURING PAD",
+      "category": "SCRUBBER",
+      "price": 6.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "soap-case",
+      "name": "SOAP CASE",
+      "category": "General",
+      "price": 8.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "sos-bottle",
+      "name": "SOS BOTTLE",
+      "category": "BOTTLE",
+      "price": 8.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "spray-bottle-bhavya-cylinder-500ml",
+      "name": "SPRAY BOTTLE BHAVYA CYLINDER 500ML",
+      "category": "SPRAY BOTTLE",
+      "price": 22.5,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "spray-bottle-vip-rock-n-roll",
+      "name": "SPRAY BOTTLE VIP ROCK N ROLL",
+      "category": "SPRAY BOTTLE",
+      "price": 32.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "spray-gun",
+      "name": "SPRAY GUN",
+      "category": "SPRAY BOTTLE",
+      "price": 12.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "stool-keptan-dining-table-coffee-motto",
+      "name": "STOOL KEPTAN DINING TABLE COFFEE (MOTTO)",
+      "category": "General",
+      "price": 740.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "supda-poly-jumbo",
+      "name": "SUPDA POLY JUMBO",
+      "category": "SUPDA",
+      "price": 51.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "supdi-nilesh-big",
+      "name": "SUPDI NILESH (BIG)",
+      "category": "SUPDI",
+      "price": 19.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "supdi-nilesh-swatch-bharat-s",
+      "name": "SUPDI NILESH SWATCH BHARAT (S)",
+      "category": "SUPDI",
+      "price": 9.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "supdi-samarth-sopan-large",
+      "name": "SUPDI SAMARTH SOPAN LARGE",
+      "category": "SUPDI",
+      "price": 46.5,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "sutli-dori",
+      "name": "SUTLI DORI",
+      "category": "SUTLI",
+      "price": 7.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "tagara-pn-no-18",
+      "name": "TAGARA PN NO. 18",
+      "category": "TAGARA",
+      "price": 27.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "tagara-pn-no-21",
+      "name": "TAGARA PN NO. 21",
+      "category": "TAGARA",
+      "price": 47.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "tagara-rajeshwari-jerry-8-no-308",
+      "name": "TAGARA RAJESHWARI JERRY 8 NO (308)",
+      "category": "UNBREAKABLE TAGARA",
+      "price": 35.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "tagara-rajeshwari-samrat-20-no-320",
+      "name": "TAGARA RAJESHWARI SAMRAT 20 NO (320)",
+      "category": "UNBREAKABLE TAGARA",
+      "price": 235.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "tagara-rajeshwari-sathi-17-no-317",
+      "name": "TAGARA RAJESHWARI SATHI 17 NO (317)",
+      "category": "UNBREAKABLE TAGARA",
+      "price": 146.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "tagara-rajeshwari-shaktiman-21-no-321",
+      "name": "TAGARA RAJESHWARI SHAKTIMAN 21 NO (321)",
+      "category": "UNBREAKABLE TAGARA",
+      "price": 331.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "tagara-rajeshwari-star-14s-no-314",
+      "name": "TAGARA RAJESHWARI STAR 14S NO (314)",
+      "category": "UNBREAKABLE TAGARA",
+      "price": 112.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "tagara-rajeshwari-star-plus-14d-315",
+      "name": "TAGARA RAJESHWARI STAR PLUS 14D (315)",
+      "category": "UNBREAKABLE TAGARA",
+      "price": 125.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "tagara-rajeshwari-sultan-19-no-319",
+      "name": "TAGARA RAJESHWARI SULTAN 19 NO (319)",
+      "category": "UNBREAKABLE TAGARA",
+      "price": 195.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "tagara-rajeshwari-tom-10-no-310",
+      "name": "TAGARA RAJESHWARI TOM 10 NO (310)",
+      "category": "UNBREAKABLE TAGARA",
+      "price": 53.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "tagara-samarth-sopan-008-s-c",
+      "name": "TAGARA SAMARTH SOPAN 008 S/C",
+      "category": "UNBREAKABLE TAGARA",
+      "price": 33.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "tagara-tub-dhoom",
+      "name": "TAGARA TUB DHOOM",
+      "category": "TAGARA",
+      "price": 36.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "tea-stainer-kajal",
+      "name": "TEA STAINER KAJAL",
+      "category": "Garna",
+      "price": 8.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "tea-stainer-with-kurchani",
+      "name": "TEA STAINER WITH KURCHANI",
+      "category": "TEA STAINER",
+      "price": 16.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "tea-stainer-zeba",
+      "name": "TEA STAINER ZEBA",
+      "category": "TEA STAINER",
+      "price": 6.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "test",
+      "name": "test",
+      "category": "General",
+      "price": 12.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "toilet-brush-silver-double",
+      "name": "TOILET BRUSH SILVER DOUBLE",
+      "category": "TOILET BRUSH",
+      "price": 34.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "toilet-cleaner-touch-cleaner-5-l",
+      "name": "TOILET CLEANER TOUCH CLEANER (5 L)",
+      "category": "CLEANING SOLUTION",
+      "price": 155.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "toilet-cleaner-touch-cleaner-500-ml",
+      "name": "TOILET CLEANER TOUCH CLEANER (500 ML)",
+      "category": "CLEANING SOLUTION",
+      "price": 33.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "tooth-brush-laser-mars",
+      "name": "TOOTH BRUSH LASER MARS",
+      "category": "TOOTH BRUSH",
+      "price": 7.5,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "tooth-brush-laser-mars",
+      "name": "TOOTH BRUSH LASER MARS",
+      "category": "TOOTH BRUSH",
+      "price": 7.5,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "tooth-brush-rinky-minky",
+      "name": "TOOTH BRUSH RINKY & MINKY",
+      "category": "TOOTH BRUSH",
+      "price": 6.5,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "toothbrush-kidszania",
+      "name": "TOOTHBRUSH KIDSZANIA",
+      "category": "TOOTH BRUSH",
+      "price": 7.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "toothpick-kalash-bamboo",
+      "name": "TOOTHPICK KALASH BAMBOO",
+      "category": "TOOTH PICK",
+      "price": 15.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "toti-jointer-sai-0-75",
+      "name": "TOTI JOINTER SAI 0.75",
+      "category": "NAL TOTI",
+      "price": 8.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "toti-jointer-sai-1",
+      "name": "TOTI JOINTER SAI 1",
+      "category": "NAL TOTI",
+      "price": 9.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "veg-rack-patel-round",
+      "name": "VEG. RACK PATEL (ROUND)",
+      "category": "VEGITABLE RACK",
+      "price": 89.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "veg-rack-patel-square",
+      "name": "VEG. RACK PATEL (SQUARE)",
+      "category": "General",
+      "price": 95.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "velan-jada",
+      "name": "VELAN  (JADA)",
+      "category": "VELAN",
+      "price": 17.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "velan-patla",
+      "name": "VELAN (PATLA)",
+      "category": "VELAN",
+      "price": 17.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "waste-bin-parmar-padel-08-silver",
+      "name": "WASTE BIN PARMAR PADEL 08 SILVER",
+      "category": "DOORMATE",
+      "price": 100.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "water-jug-18-l",
+      "name": "WATER JUG (18 L)",
+      "category": "WATER COOLER",
+      "price": 440.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "water-jug-21-l",
+      "name": "WATER JUG 21 L",
+      "category": "General",
+      "price": 510.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "wiper-16-sada-with-stick",
+      "name": "WIPER 16\" SADA (WITH STICK)",
+      "category": "WIPER",
+      "price": 48.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "wiper-nath-eva-16-with-stick",
+      "name": "WIPER NATH EVA 16\" (WITH STICK)",
+      "category": "WIPER",
+      "price": 58.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "wiper-nath-eva-20-with-stick",
+      "name": "WIPER NATH EVA 20\" (WITH STICK)",
+      "category": "WIPER",
+      "price": 66.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "wiper-nath-eva-24-with-stick",
+      "name": "WIPER NATH EVA 24\" (WITH STICK)",
+      "category": "WIPER",
+      "price": 86.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "wiper-nath-rubby-15-with-s-s-road",
+      "name": "WIPER NATH RUBBY 15 WITH S.S ROAD",
+      "category": "WIPER",
+      "price": 145.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "wiper-nath-rubby-20-with-s-s-road",
+      "name": "WIPER NATH RUBBY 20 WITH S.S. ROAD",
+      "category": "WIPER",
+      "price": 195.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "wiper-sada-21",
+      "name": "WIPER SADA (21\")",
+      "category": "WIPER",
+      "price": 75.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    }
+  ]
+}

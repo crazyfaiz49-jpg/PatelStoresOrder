@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0f766e">
+  <title>Patel Stores | Wholesale Ordering</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="hero">
+      <div class="brand-block">
+        <div class="brand-badge">PS</div>
+        <div>
+          <p class="eyebrow">B2B Wholesale Portal</p>
+          <h1>Patel Stores</h1>
+          <p class="hero-subtitle">Fast ordering for retailers, resellers, and small shops.</p>
+        </div>
+      </div>
+
+      <label class="search-shell" for="search">
+        <span class="search-icon">⌕</span>
+        <input type="text" id="search" placeholder="Search by product, category or barcode">
+      </label>
+    </header>
+
+    <main class="main-content">
+      <section class="filter-panel" aria-label="Product categories">
+        <div class="filter-row">
+          <button class="filter-chip active" data-category="All">All</button>
+          <button class="filter-chip" data-category="Bucket">Bucket</button>
+          <button class="filter-chip" data-category="Cleaning">Cleaning</button>
+          <button class="filter-chip" data-category="Bottle">Bottle</button>
+          <button class="filter-chip" data-category="Jerry Can">Jerry Can</button>
+          <button class="filter-chip" data-category="Household">Household</button>
+        </div>
+      </section>
+
+      <section class="products-section">
+        <div class="section-header">
+          <div>
+            <h2>Wholesale Products</h2>
+            <p>Bulk-ready essentials with fast checkout.</p>
+          </div>
+          <span id="results-count" class="results-pill">Loading products…</span>
+        </div>
+
+        <div id="products" class="product-grid" aria-live="polite"></div>
+      </section>
+    </main>
+
+    <button id="cart-toggle" class="cart-toggle" type="button" aria-controls="cart-drawer" aria-expanded="false">
+      <span>🛒</span>
+      <span>Cart</span>
+      <span id="cart-count" class="cart-badge">0</span>
+    </button>
+
+    <div id="drawer-overlay" class="drawer-overlay"></div>
+
+    <aside id="cart-drawer" class="cart-drawer" aria-label="Shopping cart">
+      <div class="drawer-header">
+        <div>
+          <h3>Order Basket</h3>
+          <p id="cart-total-items">0 items</p>
+        </div>
+        <button id="close-cart" class="icon-btn" type="button" aria-label="Close cart">×</button>
+      </div>
+
+      <div id="cart-items" class="cart-items"></div>
+
+      <form id="checkout-form" class="checkout-form">
+        <h4>Checkout</h4>
+        <label>
+          Customer Name
+          <input id="customer-name" name="customerName" type="text" required placeholder="Enter retailer name">
+        </label>
+        <label>
+          Mobile Number
+          <input id="customer-mobile" name="customerMobile" type="tel" required placeholder="98765 43210">
+        </label>
+        <label>
+          Remarks
+          <textarea id="customer-remarks" name="remarks" rows="3" placeholder="Delivery timing, packaging preference, or notes"></textarea>
+        </label>
+        <label style="display:none;">
+          <input
+            id="sheet-endpoint"
+            name="sheetEndpoint"
+            type="hidden"
+            value="https://script.google.com/macros/s/AKfycbzXLQEuY6Vj0Ufs4gOmVJ0YoB4X4bN5XKkkxVjTU4rBP0a0ntrQQp2TLSRAERsqVDw/exec">
+        </label>
+        <button class="submit-btn" type="submit">Place Order</button>
+      </form>
+    </aside>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script src="script.js"></script>
+</body>
+</html>
