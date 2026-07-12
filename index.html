@@ -5,115 +5,301 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#0f766e">
   <title>Patel Stores | Wholesale Ordering</title>
+
   <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
-  <section id="login-screen" class="login-screen" aria-label="Patel Stores login">
+
+<!-- LOGIN -->
+
+<section id="login-screen" class="login-screen">
+
     <div class="login-card">
-      <div class="brand-block login-brand">
-        <div class="brand-badge">PS</div>
-        <div>
-          <p class="eyebrow">B2B Wholesale Portal</p>
-          <h1>Patel Stores</h1>
-          <p class="hero-subtitle">Retailer ordering access</p>
-        </div>
-      </div>
 
-      <form id="login-form" class="login-form">
-        <label class="login-label" for="login-mobile">Mobile Number</label>
-        <input id="login-mobile" name="mobile" type="tel" inputmode="numeric" required placeholder="Enter mobile number">
-        <button class="login-btn" type="submit">Login</button>
-        <p id="login-error" class="login-error" role="alert"></p>
-      </form>
+        <div class="brand-block login-brand">
+
+            <div class="brand-badge">PS</div>
+
+            <div>
+
+                <p class="eyebrow">B2B Wholesale Portal</p>
+
+                <h1>Patel Stores</h1>
+
+                <p class="hero-subtitle">
+                    Retailer Ordering Access
+                </p>
+
+            </div>
+
+        </div>
+
+        <form id="login-form" class="login-form">
+
+            <label class="login-label">
+                Mobile Number
+            </label>
+
+            <input
+                id="login-mobile"
+                type="tel"
+                placeholder="Enter mobile number"
+                required>
+
+            <button class="login-btn" type="submit">
+                Login
+            </button>
+
+            <p id="login-error" class="login-error"></p>
+
+        </form>
+
     </div>
-  </section>
 
-  <div id="app-shell" class="app-shell is-hidden">
-    <header class="hero">
-      <div class="brand-block">
-        <div class="brand-badge">PS</div>
-        <div>
-          <p class="eyebrow">B2B Wholesale Portal</p>
-          <h1>Patel Stores</h1>
-          <p class="hero-subtitle">Fast ordering for retailers, resellers, and small shops.</p>
+</section>
+
+
+<!-- MAIN WEBSITE -->
+
+<div id="app-shell" class="app-shell is-hidden">
+
+<header class="hero">
+
+    <div class="hero-top">
+
+        <div class="logo-row">
+
+            <div class="brand-badge">
+                PS
+            </div>
+
+            <div>
+
+                <h1 class="logo-title">
+                    Patel Stores
+                </h1>
+
+            </div>
+
         </div>
-      </div>
 
-      <div class="hero-actions">
-        <div id="welcome-pill" class="welcome-pill is-hidden"></div>
-        <button id="logout-btn" class="logout-btn is-hidden" type="button">Logout</button>
-      </div>
+        <button
+            id="logout-btn"
+            class="logout-icon is-hidden"
+            type="button">
 
-      <label class="search-shell" for="search">
+            Logout
+
+        </button>
+
+    </div>
+
+
+    <label class="search-shell">
+
         <span class="search-icon">⌕</span>
-        <input type="text" id="search" placeholder="Search by product, category or barcode">
-      </label>
-    </header>
 
-    <main class="main-content">
-      <section class="filter-panel" aria-label="Product categories">
-        <div class="filter-row">
-          <button class="filter-chip active" data-category="All">All</button>
-          <button class="filter-chip" data-category="Bucket">Bucket</button>
-          <button class="filter-chip" data-category="Cleaning">Cleaning</button>
-          <button class="filter-chip" data-category="Bottle">Bottle</button>
-          <button class="filter-chip" data-category="Jerry Can">Jerry Can</button>
-          <button class="filter-chip" data-category="Household">Household</button>
-        </div>
-      </section>
+        <input
+            id="search"
+            type="text"
+            placeholder="Search product, barcode...">
 
-      <section class="products-section">
-        <div class="section-header">
-          <div>
-            <h2>Wholesale Products</h2>
-            <p>Bulk-ready essentials with fast checkout.</p>
-          </div>
-          <span id="results-count" class="results-pill">Loading products…</span>
-        </div>
+    </label>
 
-        <div id="products" class="product-grid" aria-live="polite"></div>
-      </section>
-    </main>
+</header>
 
-    <button id="cart-toggle" class="cart-toggle" type="button" aria-controls="cart-drawer" aria-expanded="false">
-      <span>🛒</span>
-      <span>Cart</span>
-      <span id="cart-count" class="cart-badge">0</span>
-    </button>
 
-    <div id="drawer-overlay" class="drawer-overlay"></div>
+<main class="main-content">
 
-    <aside id="cart-drawer" class="cart-drawer" aria-label="Shopping cart">
-      <div class="drawer-header">
-        <div>
-          <h3>Order Basket</h3>
-          <p id="cart-total-items">0 items</p>
-        </div>
-        <button id="close-cart" class="icon-btn" type="button" aria-label="Close cart">×</button>
-      </div>
+<section class="filter-panel">
 
-      <div id="cart-items" class="cart-items"></div>
+<div class="filter-row">
 
-      <form id="checkout-form" class="checkout-form">
-        <h4>Checkout</h4>
-        <label>
-          Remarks
-          <textarea id="customer-remarks" name="remarks" rows="3" placeholder="Delivery timing, packaging preference, or notes"></textarea>
-        </label>
-        <label style="display:none;">
-          <input
-            id="sheet-endpoint"
-            name="sheetEndpoint"
-            type="hidden"
-            value="https://script.google.com/macros/s/AKfycbzXLQEuY6Vj0Ufs4gOmVJ0YoB4X4bN5XKkkxVjTU4rBP0a0ntrQQp2TLSRAERsqVDw/exec">
-        </label>
-        <button class="submit-btn" type="submit">Place Order</button>
-      </form>
-    </aside>
-  </div>
+<button class="filter-chip active" data-category="All">
+All
+</button>
 
-  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+<button class="filter-chip" data-category="Bucket">
+Bucket
+</button>
 
-  <script src="script.js"></script>
+<button class="filter-chip" data-category="Cleaning">
+Cleaning
+</button>
+
+<button class="filter-chip" data-category="Bottle">
+Bottle
+</button>
+
+<button class="filter-chip" data-category="Jerry Can">
+Jerry Can
+</button>
+
+<button class="filter-chip" data-category="Household">
+Household
+</button>
+
+</div>
+
+</section>
+
+
+<section class="products-section">
+
+<div class="section-header">
+
+<div>
+
+<h2>
+Wholesale Products
+</h2>
+
+<p>
+Bulk-ready essentials
+</p>
+
+</div>
+
+<span
+id="results-count"
+class="results-pill">
+
+Loading...
+
+</span>
+
+</div>
+
+<div
+id="products"
+class="product-grid">
+
+</div>
+
+</section>
+
+</main>
+
+
+<button
+id="cart-toggle"
+class="cart-toggle"
+type="button">
+
+<span>🛒</span>
+
+<span>Cart</span>
+
+<span
+id="cart-count"
+class="cart-badge">
+
+0
+
+</span>
+
+</button>
+
+
+
+<div
+id="drawer-overlay"
+class="drawer-overlay">
+
+</div>
+
+
+<aside
+id="cart-drawer"
+class="cart-drawer">
+
+<div class="drawer-header">
+
+<div>
+
+<h3>
+Order Basket
+</h3>
+
+<p id="cart-total-items">
+0 items
+</p>
+
+</div>
+
+<button
+id="close-cart"
+class="icon-btn">
+
+×
+
+</button>
+
+</div>
+
+
+<div
+id="cart-items"
+class="cart-items">
+
+</div>
+
+
+<form
+id="checkout-form"
+class="checkout-form">
+
+<h4>
+
+Checkout
+
+</h4>
+
+<label>
+
+Remarks
+
+<textarea
+id="customer-remarks"
+name="remarks"
+rows="3"
+placeholder="Delivery instructions">
+
+</textarea>
+
+</label>
+
+
+<input
+type="hidden"
+id="sheet-endpoint"
+value="https://script.google.com/macros/s/AKfycbzXLQEuY6Vj0Ufs4gOmVJ0YoB4X4bN5XKkkxVjTU4rBP0a0ntrQQp2TLSRAERsqVDw/exec">
+
+
+<button
+class="submit-btn"
+type="submit">
+
+Place Order
+
+</button>
+
+</form>
+
+</aside>
+
+</div>
+
+
+<div
+id="toast"
+class="toast">
+
+</div>
+
+
+<script src="script.js"></script>
+
 </body>
 </html>

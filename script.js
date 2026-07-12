@@ -19,7 +19,6 @@
     loginForm: document.getElementById('login-form'),
     loginMobile: document.getElementById('login-mobile'),
     loginError: document.getElementById('login-error'),
-    welcomePill: document.getElementById('welcome-pill'),
     logoutBtn: document.getElementById('logout-btn'),
     search: document.getElementById('search'),
     products: document.getElementById('products'),
@@ -95,14 +94,9 @@
   }
 
   function updateWelcomeMessage() {
-    if (state.user?.shopName) {
-      elements.welcomePill.textContent = `Welcome, ${state.user.shopName}`;
-      elements.welcomePill.classList.remove('is-hidden');
-      elements.logoutBtn.classList.remove('is-hidden');
-    } else {
-      elements.welcomePill.classList.add('is-hidden');
-      elements.logoutBtn.classList.add('is-hidden');
-    }
+
+    elements.logoutBtn.classList.remove("is-hidden");
+
   }
 
   async function handleLogin(event) {
@@ -219,11 +213,22 @@
         <div class="product-info">
           <div class="product-name">${product.name}</div>
           <span class="product-category">${product.category}</span>
-          <p class="product-desc">${product.description || 'Wholesale ready product for retailers.'}</p>
+          <p class="product-desc">
           <div class="price-row">
-            <span class="price">₹${product.price}</span>
-            <span class="product-category">${product.barcode || 'SKU'}</span>
+
+          <span class="price">
+
+          ₹${product.price}
+
+          </span>
+
           </div>
+
+          <small class="barcode">
+
+          ${product.barcode || ""}
+
+</small>
           <div class="qty-row">
             <label class="sr-only" for="qty-${product.id}">Quantity</label>
             <input id="qty-${product.id}" class="qty-input" type="number" min="1" value="1">
