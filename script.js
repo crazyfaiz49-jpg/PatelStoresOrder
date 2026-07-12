@@ -16,12 +16,14 @@
   const elements = {
     welcomePill: document.getElementById("welcome-pill"),
     logoutBtn: document.getElementById("logout-btn"),
+    shopName: document.getElementById('shop-name'),
+    mobileNumber: document.getElementById('mobile-number'),
+    menuProfile: document.getElementById('menu-profile'),
     appShell: document.getElementById('app-shell'),
     loginScreen: document.getElementById('login-screen'),
     loginForm: document.getElementById('login-form'),
     loginMobile: document.getElementById('login-mobile'),
     loginError: document.getElementById('login-error'),
-    logoutBtn: document.getElementById('logout-btn'),
     search: document.getElementById('search'),
     products: document.getElementById('products'),
     resultsCount: document.getElementById('results-count'),
@@ -30,7 +32,10 @@
     cartItems: document.getElementById('cart-items'),
     cartToggle: document.getElementById('cart-toggle'),
     closeCart: document.getElementById('close-cart'),
+    menuToggle: document.getElementById('menu-toggle'),
+    closeMenu: document.getElementById('close-menu'),
     drawerOverlay: document.getElementById('drawer-overlay'),
+    menuDrawer: document.getElementById('menu-drawer'),
     cartDrawer: document.getElementById('cart-drawer'),
     checkoutForm: document.getElementById('checkout-form'),
     sheetEndpoint: document.getElementById('sheet-endpoint'),
@@ -72,11 +77,13 @@
 
     elements.cartToggle.addEventListener('click', () => toggleCart(true));
     elements.closeCart.addEventListener('click', () => toggleCart(false));
-    elements.drawerOverlay.addEventListener('click', () => toggleCart(false));
+    elements.menuToggle.addEventListener('click', () => toggleMenu(true));
+    elements.closeMenu.addEventListener('click', () => toggleMenu(false));
+    elements.drawerOverlay.addEventListener('click', () => closeAllDrawers());
 
     document.addEventListener('keydown', (event) => {
       if (event.key === 'Escape') {
-        toggleCart(false);
+        closeAllDrawers();
       }
     });
 
@@ -88,6 +95,7 @@
     elements.loginScreen.classList.remove('is-hidden');
     elements.welcomePill.classList.add('is-hidden');
     elements.logoutBtn.classList.add('is-hidden');
+    elements.menuProfile.classList.add('is-hidden');
   }
 
   function showStorefront() {
@@ -100,6 +108,15 @@
     if(state.user){
         elements.welcomePill.textContent = "Welcome, " + state.user.shopName;
         elements.welcomePill.classList.remove("is-hidden");
+        elements.shopName.textContent = state.user.shopName || 'Shop Name';
+        elements.mobileNumber.textContent = state.user.mobile || 'Mobile Number';
+        elements.menuProfile.classList.remove('is-hidden');
+    } else {
+        elements.welcomePill.textContent = 'Welcome';
+        elements.welcomePill.classList.add('is-hidden');
+        elements.shopName.textContent = 'Shop Name';
+        elements.mobileNumber.textContent = 'Mobile Number';
+        elements.menuProfile.classList.add('is-hidden');
     }
 
     elements.logoutBtn.classList.remove("is-hidden");
@@ -337,8 +354,30 @@
 
   function toggleCart(open) {
     elements.cartDrawer.classList.toggle('open', open);
-    elements.drawerOverlay.classList.toggle('open', open);
+    if (open) {
+      elements.menuDrawer.classList.remove('open');
+      elements.menuToggle.setAttribute('aria-expanded', 'false');
+    }
+    elements.drawerOverlay.classList.toggle('open', open || elements.menuDrawer.classList.contains('open'));
     elements.cartToggle.setAttribute('aria-expanded', String(open));
+  }
+
+  function toggleMenu(open) {
+    elements.menuDrawer.classList.toggle('open', open);
+    if (open) {
+      elements.cartDrawer.classList.remove('open');
+      elements.cartToggle.setAttribute('aria-expanded', 'false');
+    }
+    elements.drawerOverlay.classList.toggle('open', open || elements.cartDrawer.classList.contains('open'));
+    elements.menuToggle.setAttribute('aria-expanded', String(open));
+  }
+
+  function closeAllDrawers() {
+    elements.cartDrawer.classList.remove('open');
+    elements.menuDrawer.classList.remove('open');
+    elements.drawerOverlay.classList.remove('open');
+    elements.cartToggle.setAttribute('aria-expanded', 'false');
+    elements.menuToggle.setAttribute('aria-expanded', 'false');
   }
 
   function generateOrderId() {
