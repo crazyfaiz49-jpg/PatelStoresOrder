@@ -7,6 +7,7 @@
   <title>Patel Stores | Wholesale Ordering</title>
 
   <link rel="stylesheet" href="style.css">
+  <link rel="manifest" href="manifest.json">
 </head>
 
 <body>
@@ -84,20 +85,31 @@
 
         </div>
 
-        <button
-            id="menu-toggle"
-            class="menu-toggle"
-            type="button"
-            aria-controls="menu-drawer"
-            aria-expanded="false"
-            aria-label="Open menu">
+        <div class="hero-actions">
+            <button id="sync-status" class="sync-status" type="button" aria-expanded="false">● Online</button>
+            <button
+                id="menu-toggle"
+                class="menu-toggle"
+                type="button"
+                aria-controls="menu-drawer"
+                aria-expanded="false"
+                aria-label="Open menu">
 
-            ☰
+                ☰
 
-        </button>
+            </button>
+        </div>
 
     </div>
 
+
+    <div id="sync-panel" class="sync-panel is-hidden">
+        <div class="sync-panel-header">Sync Status</div>
+        <div id="sync-summary" class="sync-summary">Checking sync state…</div>
+        <div class="sync-actions">
+            <button id="retry-sync" class="retry-sync" type="button">Retry Sync</button>
+        </div>
+    </div>
 
     <label class="search-shell">
 

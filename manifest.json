@@ -1,0 +1,17 @@
+{
+  "name": "Patel Stores Wholesale Ordering",
+  "short_name": "Patel Stores",
+  "description": "Offline-first wholesale ordering for Patel Stores retailers",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#0f766e",
+  "icons": [
+    {
+      "src": "images/placeholder.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

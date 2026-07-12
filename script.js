@@ -3,6 +3,11 @@
   const LOGIN_KEY = 'patel-stores-auth';
   const USER_KEY = 'patel-stores-user';
   const LOGIN_API = 'https://script.google.com/macros/s/AKfycbzXLQEuY6Vj0Ufs4gOmVJ0YoB4X4bN5XKkkxVjTU4rBP0a0ntrQQp2TLSRAERsqVDw/exec';
+  const DB_NAME = 'patel-stores-db';
+  const DB_VERSION = 1;
+  const PRODUCTS_STORE = 'products';
+  const ORDERS_STORE = 'orders';
+  const SYNCED_ORDERS_KEY = 'patel-stores-synced-orders';
 
   const state = {
     products: [],
@@ -34,6 +39,10 @@
     closeCart: document.getElementById('close-cart'),
     menuToggle: document.getElementById('menu-toggle'),
     closeMenu: document.getElementById('close-menu'),
+    syncStatus: document.getElementById('sync-status'),
+    syncPanel: document.getElementById('sync-panel'),
+    syncSummary: document.getElementById('sync-summary'),
+    retrySync: document.getElementById('retry-sync'),
     drawerOverlay: document.getElementById('drawer-overlay'),
     menuDrawer: document.getElementById('menu-drawer'),
     cartDrawer: document.getElementById('cart-drawer'),
@@ -44,6 +53,8 @@
 
   function init() {
     bindEvents();
+    registerServiceWorker();
+    initSyncSystem();
 
     const savedUser = localStorage.getItem(USER_KEY);
     if (savedUser) {
@@ -88,6 +99,59 @@
     });
 
     elements.checkoutForm.addEventListener('submit', handleCheckout);
+    elements.syncStatus.addEventListener('click', toggleSyncPanel);
+    elements.retrySync.addEventListener('click', () => syncPendingOrders());
+  }
+
+  function initSyncSystem() {
+    updateSyncStatus();
+    window.addEventListener('online', () => {
+      updateSyncStatus();
+      syncPendingOrders();
+      showToast('Connection restored. Syncing pending orders.');
+    });
+    window.addEventListener('offline', () => {
+      updateSyncStatus();
+      showToast('Offline mode enabled. Orders will sync when connection returns.');
+    });
+    navigator.serviceWorker?.addEventListener('message', (event) => {
+      if (event.data?.type === 'SYNC_ORDERS') {
+        syncPendingOrders();
+      }
+    });
+    syncPendingOrders();
+  }
+
+  function registerServiceWorker() {
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('service-worker.js').catch((error) => {
+        console.error('Service worker registration failed', error);
+      });
+    }
+  }
+
+  function toggleSyncPanel() {
+    const open = elements.syncPanel.classList.contains('is-hidden');
+    elements.syncPanel.classList.toggle('is-hidden', !open);
+    elements.syncStatus.setAttribute('aria-expanded', String(open));
+    if (open) {
+      updateSyncStatus();
+    }
+  }
+
+  function updateSyncStatus() {
+    if (!elements.syncStatus) return;
+    const pendingCount = state.pendingOrderCount || 0;
+    const online = navigator.onLine;
+    const label = online ? '● Online' : '● Offline';
+    elements.syncStatus.textContent = pendingCount > 0 ? `${label} (${pendingCount})` : label;
+    elements.syncStatus.style.background = online ? 'rgba(255,255,255,.16)' : 'rgba(245,158,11,.25)';
+    if (elements.syncSummary) {
+      const syncedCount = Number(localStorage.getItem(SYNCED_ORDERS_KEY) || '0');
+      elements.syncSummary.textContent = online
+        ? `${pendingCount} pending • ${syncedCount} synced • ready to sync`
+        : `${pendingCount} pending • ${syncedCount} synced • offline`;
+    }
   }
 
   function showLogin() {
@@ -132,6 +196,25 @@
       return;
     }
 
+    const savedUser = JSON.parse(localStorage.getItem(USER_KEY) || '{}');
+    if (!navigator.onLine && savedUser?.mobile === mobile) {
+      const user = {
+        shopName: savedUser.shopName || 'Retailer',
+        mobile,
+        loginToken: savedUser.loginToken || 'offline-session',
+        loginTime: savedUser.loginTime || new Date().toISOString()
+      };
+      state.user = user;
+      localStorage.setItem(LOGIN_KEY, 'true');
+      localStorage.setItem(USER_KEY, JSON.stringify(user));
+      showStorefront();
+      updateWelcomeMessage();
+      loadProducts();
+      renderCart();
+      showToast('Signed in offline using saved retailer details.');
+      return;
+    }
+
     elements.loginError.textContent = '';
     elements.loginForm.querySelector('button').disabled = true;
 
@@ -142,7 +225,9 @@
       if (data.success === true) {
         const user = {
           shopName: data.shopName || 'Retailer',
-          mobile
+          mobile,
+          loginToken: data.loginToken || 'online-session',
+          loginTime: new Date().toISOString()
         };
 
         state.user = user;
@@ -161,7 +246,24 @@
       }
     } catch (error) {
       console.error(error);
-      elements.loginError.textContent = 'Unable to reach Patel Stores login service. Please try again.';
+      if (savedUser?.mobile === mobile) {
+        const user = {
+          shopName: savedUser.shopName || 'Retailer',
+          mobile,
+          loginToken: savedUser.loginToken || 'offline-session',
+          loginTime: savedUser.loginTime || new Date().toISOString()
+        };
+        state.user = user;
+        localStorage.setItem(LOGIN_KEY, 'true');
+        localStorage.setItem(USER_KEY, JSON.stringify(user));
+        showStorefront();
+        updateWelcomeMessage();
+        loadProducts();
+        renderCart();
+        showToast('Signed in offline using saved retailer details.');
+      } else {
+        elements.loginError.textContent = 'Unable to reach Patel Stores login service. Please try again.';
+      }
     } finally {
       elements.loginForm.querySelector('button').disabled = false;
     }
@@ -178,13 +280,29 @@
 
   async function loadProducts() {
     try {
+      const cachedProducts = await getProductsFromDb();
+      if (cachedProducts.length) {
+        state.products = cachedProducts;
+        renderProducts();
+      }
+
+      if (!navigator.onLine) {
+        if (!cachedProducts.length) {
+          elements.products.innerHTML = '<div class="empty-state">Products could not be loaded offline. Please connect to the internet once.</div>';
+          elements.resultsCount.textContent = 'Unavailable';
+        }
+        return;
+      }
+
       const response = await fetch('products.json');
       if (!response.ok) {
         throw new Error('Unable to load products');
       }
 
       const data = await response.json();
-      state.products = data.products || [];
+      const products = data.products || [];
+      state.products = products;
+      await saveProductsToDb(products);
       renderProducts();
     } catch (error) {
       elements.products.innerHTML = '<div class="empty-state">Products could not be loaded. Please refresh the page.</div>';
@@ -221,6 +339,16 @@
       });
     });
 
+    document.querySelectorAll('.qty-btn').forEach((button) => {
+      button.addEventListener('click', () => {
+        const card = button.closest('.product-card');
+        const quantityInput = card.querySelector('.qty-input');
+        const currentValue = parseInt(quantityInput.value, 10) || 1;
+        const nextValue = button.dataset.qtyAction === 'plus' ? currentValue + 1 : Math.max(1, currentValue - 1);
+        quantityInput.value = nextValue;
+      });
+    });
+
     document.querySelectorAll('.product-card img').forEach((img) => {
       img.addEventListener('error', () => {
         img.src = 'images/placeholder.svg';
@@ -233,31 +361,24 @@
 
     return `
       <article class="product-card">
-        <img src="${imagePath}" alt="${product.name}" loading="lazy" onerror="this.onerror=null;this.src='images/placeholder.svg';">
+        <div class="product-card-media">
+          <img src="${imagePath}" alt="${product.name}" loading="lazy" onerror="this.onerror=null;this.src='images/placeholder.svg';">
+        </div>
         <div class="product-info">
           <div class="product-name">${product.name}</div>
           <span class="product-category">${product.category}</span>
-          <p class="product-desc">
           <div class="price-row">
-
-          <span class="price">
-
-          ₹${product.price}
-
-          </span>
-
+            <span class="price">₹${product.price}</span>
           </div>
-
-          <small class="barcode">
-
-          ${product.barcode || ""}
-
-</small>
           <div class="qty-row">
             <label class="sr-only" for="qty-${product.id}">Quantity</label>
-            <input id="qty-${product.id}" class="qty-input" type="number" min="1" value="1">
+            <div class="qty-control">
+              <button class="qty-btn" type="button" data-qty-action="minus">−</button>
+              <input id="qty-${product.id}" class="qty-input" type="number" min="1" value="1">
+              <button class="qty-btn" type="button" data-qty-action="plus">+</button>
+            </div>
           </div>
-          <button class="add-btn" data-product-id="${product.id}" type="button">Add to Cart</button>
+          <button class="add-btn" data-product-id="${product.id}" type="button">🛒 Add to Cart</button>
         </div>
       </article>
     `;
@@ -357,6 +478,9 @@
     if (open) {
       elements.menuDrawer.classList.remove('open');
       elements.menuToggle.setAttribute('aria-expanded', 'false');
+      elements.cartToggle.classList.add('hidden');
+    } else {
+      elements.cartToggle.classList.remove('hidden');
     }
     elements.drawerOverlay.classList.toggle('open', open || elements.menuDrawer.classList.contains('open'));
     elements.cartToggle.setAttribute('aria-expanded', String(open));
@@ -367,6 +491,7 @@
     if (open) {
       elements.cartDrawer.classList.remove('open');
       elements.cartToggle.setAttribute('aria-expanded', 'false');
+      elements.cartToggle.classList.remove('hidden');
     }
     elements.drawerOverlay.classList.toggle('open', open || elements.cartDrawer.classList.contains('open'));
     elements.menuToggle.setAttribute('aria-expanded', String(open));
@@ -376,6 +501,7 @@
     elements.cartDrawer.classList.remove('open');
     elements.menuDrawer.classList.remove('open');
     elements.drawerOverlay.classList.remove('open');
+    elements.cartToggle.classList.remove('hidden');
     elements.cartToggle.setAttribute('aria-expanded', 'false');
     elements.menuToggle.setAttribute('aria-expanded', 'false');
   }
@@ -438,23 +564,33 @@
     };
 
     const endpoint = elements.sheetEndpoint.value.trim();
+    const localOrderRecord = {
+      ...orderPayload,
+      status: 'Pending Sync',
+      createdAt: dateTime,
+      syncedAt: null
+    };
 
-    if (endpoint) {
+    await addOrderToQueue(localOrderRecord);
+
+    if (endpoint && navigator.onLine) {
       try {
         const form = new FormData();
-
         form.append('data', JSON.stringify(orderPayload));
-
         await fetch(endpoint, {
           method: 'POST',
           body: form
         });
+        await updateOrderStatus(orderId, 'Synced');
+        await markOrderSynced(orderId);
+        showToast('Order Synced Successfully');
       } catch (error) {
         console.error(error);
+        await updateOrderStatus(orderId, 'Pending Sync');
         showToast('The order was saved locally, but the sheet endpoint could not be reached.');
       }
     } else {
-      showToast('Set your Apps Script endpoint to send the order to Google Sheets.');
+      showToast('Order saved offline and will sync when connection returns.');
     }
 
     const savedOrders = JSON.parse(localStorage.getItem(ORDERS_KEY) || '[]');
@@ -465,7 +601,149 @@
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state.cart));
     renderCart();
     elements.checkoutForm.reset();
-    showToast('Order submitted successfully.');
+    updateSyncStatus();
+  }
+
+  function openDatabase() {
+    return new Promise((resolve, reject) => {
+      const request = indexedDB.open(DB_NAME, DB_VERSION);
+      request.onupgradeneeded = () => {
+        const db = request.result;
+        if (!db.objectStoreNames.contains(PRODUCTS_STORE)) {
+          db.createObjectStore(PRODUCTS_STORE, { keyPath: 'id' });
+        }
+        if (!db.objectStoreNames.contains(ORDERS_STORE)) {
+          const orderStore = db.createObjectStore(ORDERS_STORE, { keyPath: 'orderId' });
+          orderStore.createIndex('status', 'status', { unique: false });
+        }
+      };
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  async function saveProductsToDb(products) {
+    const db = await openDatabase();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(PRODUCTS_STORE, 'readwrite');
+      const store = tx.objectStore(PRODUCTS_STORE);
+      products.forEach((product) => store.put(product));
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+  }
+
+  async function getProductsFromDb() {
+    const db = await openDatabase();
+    return new Promise((resolve) => {
+      const tx = db.transaction(PRODUCTS_STORE, 'readonly');
+      const store = tx.objectStore(PRODUCTS_STORE);
+      const request = store.getAll();
+      request.onsuccess = () => resolve(request.result || []);
+      request.onerror = () => resolve([]);
+    });
+  }
+
+  async function addOrderToQueue(orderRecord) {
+    const db = await openDatabase();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(ORDERS_STORE, 'readwrite');
+      const store = tx.objectStore(ORDERS_STORE);
+      store.put(orderRecord);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+  }
+
+  async function updateOrderStatus(orderId, status) {
+    const db = await openDatabase();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(ORDERS_STORE, 'readwrite');
+      const store = tx.objectStore(ORDERS_STORE);
+      const request = store.get(orderId);
+      request.onsuccess = () => {
+        const order = request.result;
+        if (order) {
+          order.status = status;
+          order.syncedAt = status === 'Synced' ? new Date().toISOString() : null;
+          store.put(order);
+        }
+        tx.oncomplete = () => resolve();
+      };
+      tx.onerror = () => reject(tx.error);
+    });
+  }
+
+  async function markOrderSynced(orderId) {
+    const syncedCount = Number(localStorage.getItem(SYNCED_ORDERS_KEY) || '0');
+    const syncedIds = JSON.parse(localStorage.getItem('patel-stores-synced-order-ids') || '[]');
+    if (!syncedIds.includes(orderId)) {
+      syncedIds.push(orderId);
+      localStorage.setItem('patel-stores-synced-order-ids', JSON.stringify(syncedIds));
+      localStorage.setItem(SYNCED_ORDERS_KEY, String(syncedCount + 1));
+    }
+    await removeOrderFromQueue(orderId);
+  }
+
+  async function removeOrderFromQueue(orderId) {
+    const db = await openDatabase();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(ORDERS_STORE, 'readwrite');
+      const store = tx.objectStore(ORDERS_STORE);
+      store.delete(orderId);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+  }
+
+  async function getPendingOrders() {
+    const db = await openDatabase();
+    return new Promise((resolve) => {
+      const tx = db.transaction(ORDERS_STORE, 'readonly');
+      const store = tx.objectStore(ORDERS_STORE);
+      const request = store.getAll();
+      request.onsuccess = () => {
+        const orders = (request.result || []).filter((order) => order?.status === 'Pending Sync');
+        state.pendingOrderCount = orders.length;
+        updateSyncStatus();
+        resolve(orders);
+      };
+      request.onerror = () => resolve([]);
+    });
+  }
+
+  async function syncPendingOrders() {
+    const endpoint = elements.sheetEndpoint.value.trim();
+    if (!endpoint || !navigator.onLine) {
+      await getPendingOrders();
+      return;
+    }
+
+    const pendingOrders = await getPendingOrders();
+    if (!pendingOrders.length) {
+      updateSyncStatus();
+      return;
+    }
+
+    for (const order of pendingOrders) {
+      try {
+        const form = new FormData();
+        form.append('data', JSON.stringify(order));
+        await fetch(endpoint, {
+          method: 'POST',
+          body: form
+        });
+        await updateOrderStatus(order.orderId, 'Synced');
+        await markOrderSynced(order.orderId);
+      } catch (error) {
+        console.error(error);
+      }
+    }
+
+    updateSyncStatus();
+    if (pendingOrders.length) {
+      showToast('Order Synced Successfully');
+    }
   }
 
   function showToast(message) {
