@@ -37,6 +37,69 @@ button {
   padding-bottom: 120px;
 }
 
+.app-shell.is-hidden {
+  display: none;
+}
+
+.login-screen {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: linear-gradient(135deg, var(--primary) 0%, #14b8a6 100%);
+}
+
+.login-screen.is-hidden {
+  display: none;
+}
+
+.login-card {
+  width: min(100%, 420px);
+  background: var(--surface);
+  border-radius: 24px;
+  padding: 24px;
+  box-shadow: var(--shadow);
+}
+
+.login-brand {
+  margin-bottom: 20px;
+}
+
+.login-form {
+  display: grid;
+  gap: 12px;
+}
+
+.login-label {
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.login-form input {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 12px 14px;
+  background: var(--surface-soft);
+}
+
+.login-btn {
+  width: 100%;
+  background: var(--primary);
+  color: white;
+  border: 0;
+  padding: 12px 14px;
+  border-radius: 14px;
+  font-weight: 700;
+}
+
+.login-error {
+  min-height: 20px;
+  color: #dc2626;
+  font-size: 0.9rem;
+}
+
 .hero {
   background: linear-gradient(135deg, var(--primary) 0%, #14b8a6 100%);
   color: white;
@@ -45,6 +108,37 @@ button {
   top: 0;
   z-index: 20;
   box-shadow: 0 10px 30px rgba(15, 23, 42, 0.16);
+}
+
+.hero-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.welcome-pill {
+  background: rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 999px;
+  padding: 8px 12px;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.logout-btn {
+  background: rgba(255, 255, 255, 0.16);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 999px;
+  padding: 8px 12px;
+  font-weight: 600;
+}
+
+.welcome-pill.is-hidden,
+.logout-btn.is-hidden {
+  display: none;
 }
 
 .brand-block {
@@ -351,7 +445,7 @@ button {
 .cart-items {
   flex: 1;
   overflow-y: auto;
-  padding: 14px 16px 0;
+  padding: 14px 16px 120px;
 }
 
 .cart-item {
@@ -407,6 +501,10 @@ button {
   display: grid;
   gap: 10px;
   background: white;
+
+  position: sticky;
+  bottom: 0;
+  z-index: 100;
 }
 
 .checkout-form h4 {
@@ -430,11 +528,13 @@ button {
 }
 
 .submit-btn {
-  background: var(--primary);
+  background: var(--accent);
   color: white;
-  padding: 12px;
-  border-radius: 12px;
+  padding: 16px;
+  border-radius: 14px;
   font-weight: 700;
+  font-size: 18px;
+  width: 100%;
 }
 
 .submit-btn:hover {

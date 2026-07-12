@@ -1,15 +1,26 @@
   const STORAGE_KEY = 'patel-stores-cart';
   const ORDERS_KEY = 'patel-stores-orders';
+  const LOGIN_KEY = 'patel-stores-auth';
+  const USER_KEY = 'patel-stores-user';
+  const LOGIN_API = 'https://script.google.com/macros/s/AKfycbzXLQEuY6Vj0Ufs4gOmVJ0YoB4X4bN5XKkkxVjTU4rBP0a0ntrQQp2TLSRAERsqVDw/exec';
 
   const state = {
     products: [],
     filteredProducts: [],
     activeCategory: 'All',
     searchTerm: '',
-    cart: JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]')
+    cart: JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'),
+    user: null
   };
 
   const elements = {
+    appShell: document.getElementById('app-shell'),
+    loginScreen: document.getElementById('login-screen'),
+    loginForm: document.getElementById('login-form'),
+    loginMobile: document.getElementById('login-mobile'),
+    loginError: document.getElementById('login-error'),
+    welcomePill: document.getElementById('welcome-pill'),
+    logoutBtn: document.getElementById('logout-btn'),
     search: document.getElementById('search'),
     products: document.getElementById('products'),
     resultsCount: document.getElementById('results-count'),
@@ -27,11 +38,23 @@
 
   function init() {
     bindEvents();
-    loadProducts();
-    renderCart();
+
+    const savedUser = localStorage.getItem(USER_KEY);
+    if (savedUser) {
+      const user = JSON.parse(savedUser);
+      state.user = user;
+      showStorefront();
+      updateWelcomeMessage();
+      loadProducts();
+      renderCart();
+    } else {
+      showLogin();
+    }
   }
 
   function bindEvents() {
+    elements.loginForm.addEventListener('submit', handleLogin);
+    elements.logoutBtn.addEventListener('click', handleLogout);
     elements.search.addEventListener('input', (event) => {
       state.searchTerm = event.target.value.trim();
       renderProducts();
@@ -57,6 +80,82 @@
     });
 
     elements.checkoutForm.addEventListener('submit', handleCheckout);
+  }
+
+  function showLogin() {
+    elements.appShell.classList.add('is-hidden');
+    elements.loginScreen.classList.remove('is-hidden');
+    elements.welcomePill.classList.add('is-hidden');
+    elements.logoutBtn.classList.add('is-hidden');
+  }
+
+  function showStorefront() {
+    elements.appShell.classList.remove('is-hidden');
+    elements.loginScreen.classList.add('is-hidden');
+  }
+
+  function updateWelcomeMessage() {
+    if (state.user?.shopName) {
+      elements.welcomePill.textContent = `Welcome, ${state.user.shopName}`;
+      elements.welcomePill.classList.remove('is-hidden');
+      elements.logoutBtn.classList.remove('is-hidden');
+    } else {
+      elements.welcomePill.classList.add('is-hidden');
+      elements.logoutBtn.classList.add('is-hidden');
+    }
+  }
+
+  async function handleLogin(event) {
+    event.preventDefault();
+
+    const mobile = elements.loginMobile.value.trim();
+    if (!/^\d{10}$/.test(mobile)) {
+      elements.loginError.textContent = 'Please enter a valid 10-digit mobile number.';
+      return;
+    }
+
+    elements.loginError.textContent = '';
+    elements.loginForm.querySelector('button').disabled = true;
+
+    try {
+      const response = await fetch(`${LOGIN_API}?action=login&mobile=${encodeURIComponent(mobile)}`);
+      const data = await response.json();
+
+      if (data.success === true) {
+        const user = {
+          shopName: data.shopName || 'Retailer',
+          mobile
+        };
+
+        state.user = user;
+        localStorage.setItem(LOGIN_KEY, 'true');
+        localStorage.setItem(USER_KEY, JSON.stringify(user));
+        showStorefront();
+        updateWelcomeMessage();
+        loadProducts();
+        renderCart();
+      } else if (data.message === 'notfound') {
+        elements.loginError.textContent = 'You are not registered with Patel Stores. Kindly contact 7863059164';
+      } else if (data.message === 'inactive') {
+        elements.loginError.textContent = 'Your account is inactive. Please contact Patel Stores.';
+      } else {
+        elements.loginError.textContent = data.message || 'Login failed. Please try again.';
+      }
+    } catch (error) {
+      console.error(error);
+      elements.loginError.textContent = 'Unable to reach Patel Stores login service. Please try again.';
+    } finally {
+      elements.loginForm.querySelector('button').disabled = false;
+    }
+  }
+
+  function handleLogout() {
+    localStorage.removeItem(LOGIN_KEY);
+    localStorage.removeItem(USER_KEY);
+    state.user = null;
+    elements.loginForm.reset();
+    elements.loginError.textContent = '';
+    showLogin();
   }
 
   async function loadProducts() {
@@ -230,6 +329,13 @@
     elements.cartToggle.setAttribute('aria-expanded', String(open));
   }
 
+  function generateOrderId() {
+    const today = new Date();
+    const datePart = `${today.getFullYear()}${String(today.getMonth() + 1).padStart(2, '0')}${String(today.getDate()).padStart(2, '0')}`;
+    const uniqueSuffix = `${Date.now().toString().slice(-6)}${Math.floor(Math.random() * 900 + 100)}`;
+    return `PS-${datePart}-${uniqueSuffix}`;
+  }
+
   async function handleCheckout(event) {
     event.preventDefault();
 
@@ -239,12 +345,45 @@
     }
 
     const formData = new FormData(elements.checkoutForm);
+    const savedUser = JSON.parse(localStorage.getItem(USER_KEY) || '{}');
+    const retailerName = savedUser?.shopName || state.user?.shopName || '';
+    const retailerMobile = savedUser?.mobile || state.user?.mobile || '';
+    const remarks = formData.get('remarks')?.toString().trim() || '';
+    const orderId = generateOrderId();
+    const dateTime = new Date().toISOString();
+
+    const orderRows = state.cart.map((item) => ({
+      'Order ID': orderId,
+      Date: dateTime,
+      'Shop Name': retailerName,
+      Mobile: retailerMobile,
+      Remarks: remarks,
+      Product: item.name,
+      Qty: item.quantity
+    }));
+
+    const sheetRows = orderRows.map((row) => [
+      row['Order ID'],
+      row.Date,
+      row['Shop Name'],
+      row.Mobile,
+      row.Remarks,
+      row.Product,
+      row.Qty
+    ]);
+
     const orderPayload = {
-      customerName: formData.get('customerName')?.toString().trim() || '',
-      mobileNumber: formData.get('customerMobile')?.toString().trim() || '',
-      remarks: formData.get('remarks')?.toString().trim() || '',
-      items: state.cart,
-      submittedAt: new Date().toISOString()
+      orderId,
+      dateTime,
+      shopName: retailerName,
+      mobile: retailerMobile,
+      remarks,
+      rows: orderRows,
+      sheetRows,
+      items: state.cart.map((item) => ({
+        ...item,
+        orderId
+      }))
     };
 
     const endpoint = elements.sheetEndpoint.value.trim();
@@ -253,10 +392,10 @@
       try {
         const form = new FormData();
 
-        form.append("data", JSON.stringify(orderPayload));
+        form.append('data', JSON.stringify(orderPayload));
 
         await fetch(endpoint, {
-          method: "POST",
+          method: 'POST',
           body: form
         });
       } catch (error) {

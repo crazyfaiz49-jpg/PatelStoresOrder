@@ -8,7 +8,27 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="app-shell">
+  <section id="login-screen" class="login-screen" aria-label="Patel Stores login">
+    <div class="login-card">
+      <div class="brand-block login-brand">
+        <div class="brand-badge">PS</div>
+        <div>
+          <p class="eyebrow">B2B Wholesale Portal</p>
+          <h1>Patel Stores</h1>
+          <p class="hero-subtitle">Retailer ordering access</p>
+        </div>
+      </div>
+
+      <form id="login-form" class="login-form">
+        <label class="login-label" for="login-mobile">Mobile Number</label>
+        <input id="login-mobile" name="mobile" type="tel" inputmode="numeric" required placeholder="Enter mobile number">
+        <button class="login-btn" type="submit">Login</button>
+        <p id="login-error" class="login-error" role="alert"></p>
+      </form>
+    </div>
+  </section>
+
+  <div id="app-shell" class="app-shell is-hidden">
     <header class="hero">
       <div class="brand-block">
         <div class="brand-badge">PS</div>
@@ -17,6 +37,11 @@
           <h1>Patel Stores</h1>
           <p class="hero-subtitle">Fast ordering for retailers, resellers, and small shops.</p>
         </div>
+      </div>
+
+      <div class="hero-actions">
+        <div id="welcome-pill" class="welcome-pill is-hidden"></div>
+        <button id="logout-btn" class="logout-btn is-hidden" type="button">Logout</button>
       </div>
 
       <label class="search-shell" for="search">
@@ -71,14 +96,6 @@
 
       <form id="checkout-form" class="checkout-form">
         <h4>Checkout</h4>
-        <label>
-          Customer Name
-          <input id="customer-name" name="customerName" type="text" required placeholder="Enter retailer name">
-        </label>
-        <label>
-          Mobile Number
-          <input id="customer-mobile" name="customerMobile" type="tel" required placeholder="98765 43210">
-        </label>
         <label>
           Remarks
           <textarea id="customer-remarks" name="remarks" rows="3" placeholder="Delivery timing, packaging preference, or notes"></textarea>
