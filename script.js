@@ -14,6 +14,8 @@
   };
 
   const elements = {
+    welcomePill: document.getElementById("welcome-pill"),
+    logoutBtn: document.getElementById("logout-btn"),
     appShell: document.getElementById('app-shell'),
     loginScreen: document.getElementById('login-screen'),
     loginForm: document.getElementById('login-form'),
@@ -94,6 +96,11 @@
   }
 
   function updateWelcomeMessage() {
+
+    if(state.user){
+        elements.welcomePill.textContent = "Welcome, " + state.user.shopName;
+        elements.welcomePill.classList.remove("is-hidden");
+    }
 
     elements.logoutBtn.classList.remove("is-hidden");
 
