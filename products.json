@@ -1,30 +1,6 @@
 {
   "products": [
     {
-      "id": "qa-product-a",
-      "name": "QA Product A",
-      "category": "QA-Cat",
-      "price": 55.0,
-      "image": "images/placeholder.png",
-      "description": "desc2"
-    },
-    {
-      "id": "qa-product-b",
-      "name": "QA Product B",
-      "category": "QA-Cat",
-      "price": 35.0,
-      "image": "images/placeholder.png",
-      "description": "desc"
-    },
-    {
-      "id": "qa-product-import",
-      "name": "QA Product Import",
-      "category": "QA-Cat",
-      "price": 7.0,
-      "image": "images/placeholder.png",
-      "description": "i"
-    },
-    {
       "id": "umbrella",
       "name": "UMBRELLA",
       "category": "General",
