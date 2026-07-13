@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Patel Stores Admin Panel</title>
+    <style>
+      :root { color-scheme: dark; font-family: Inter, Segoe UI, sans-serif; }
+      body { margin: 0; background: #0f172a; color: #f8fafc; }
+      .container { max-width: 1200px; margin: 0 auto; padding: 24px; }
+      .card { background: rgba(15,23,42,.9); border: 1px solid rgba(148,163,184,.25); border-radius: 20px; padding: 20px; box-shadow: 0 20px 50px rgba(0,0,0,.15); margin-bottom: 20px; }
+      .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+      button, input, select, textarea { font: inherit; border-radius: 10px; border: 1px solid rgba(148,163,184,.25); padding: 10px 12px; }
+      button { background: linear-gradient(135deg, #2563eb, #7c3aed); color: white; cursor: pointer; }
+      .grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+      table { width: 100%; border-collapse: collapse; }
+      th, td { text-align: left; padding: 10px; border-bottom: 1px solid rgba(148,163,184,.2); }
+      .muted { color: #94a3b8; }
+      .actions button { margin-right: 8px; }
+      .pill { display: inline-block; padding: 6px 10px; border-radius: 999px; background: rgba(37,99,235,.2); margin: 2px; }
+      form { display: grid; gap: 12px; }
+      .row { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="topbar">
+        <div>
+          <h1>Patel Stores Admin Panel</h1>
+          <div class="muted">SQLite-first catalog management for the storefront</div>
+        </div>
+        <button onclick="window.location='/publish'">Publish Website</button>
+      </div>
+
+      <div class="card">
+        <h2>Dashboard</h2>
+        <div class="grid">
+          <div><strong>{{ products|length }}</strong><div class="muted">Products</div></div>
+          <div><strong>{{ categories|length }}</strong><div class="muted">Categories</div></div>
+          <div><strong>{{ settings.get('website_url', '') or 'Not set' }}</strong><div class="muted">Website</div></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Add Product</h2>
+        <form action="/api/products" method="post" enctype="multipart/form-data">
+          <div class="row">
+            <input name="product_name" placeholder="Product name" required>
+            <input name="price" type="number" step="0.01" placeholder="Price" required>
+            <select name="category">
+              {% for category in categories %}
+              <option value="{{ category.category_name }}">{{ category.category_name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <textarea name="description" rows="3" placeholder="Description"></textarea>
+          <input type="file" name="image" accept="image/*">
+          <button type="submit">Save Product</button>
+        </form>
+      </div>
+
+      <div class="card">
+        <h2>Products</h2>
+        <table>
+          <thead>
+            <tr><th>Photo</th><th>Name</th><th>Category</th><th>Price</th><th>Description</th><th>Actions</th></tr>
+          </thead>
+          <tbody>
+            {% for product in products %}
+            <tr>
+              <td>{% if product.image %}<img src="/{{ product.image }}" alt="" style="width:56px;height:56px;object-fit:cover;border-radius:10px;">{% else %}—{% endif %}</td>
+              <td>{{ product.product_name }}</td>
+              <td>{{ product.category }}</td>
+              <td>{{ product.price }}</td>
+              <td>{{ product.description or '—' }}</td>
+              <td class="actions">
+                <button onclick="fetch('/api/products/{{ product.id }}', {method:'DELETE'}).then(() => location.reload())">Delete</button>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </body>
+</html>
