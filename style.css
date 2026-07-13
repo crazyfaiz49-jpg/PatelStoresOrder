@@ -319,6 +319,8 @@ button {
   display: grid;
   grid-template-columns: repeat(1, minmax(0, 1fr));
   gap: 14px;
+  content-visibility: auto;
+  contain-intrinsic-size: 720px;
 }
 
 .product-card {
@@ -332,6 +334,7 @@ button {
   gap: 12px;
   position: relative;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
+  contain: layout paint;
 }
 
 .product-card:hover {
@@ -353,6 +356,7 @@ button {
   overflow: hidden;
   background: #f8fafc;
   position: relative;
+  contain: paint;
 }
 
 .image-shell.is-loading::before {
@@ -991,6 +995,7 @@ button {
   place-items: center;
   overflow: hidden;
   touch-action: none;
+  contain: paint;
 }
 
 #image-viewer-img {
@@ -1146,5 +1151,16 @@ button {
 
   .cart-toggle {
     min-height: 42px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

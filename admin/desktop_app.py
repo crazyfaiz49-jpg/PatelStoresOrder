@@ -5,7 +5,37 @@ from pathlib import Path
 
 from PySide6 import QtCore, QtGui, QtPrintSupport, QtWidgets
 
-ROOT = Path(__file__).resolve().parents[1]
+def _resolve_runtime_root() -> Path:
+    if getattr(sys, 'frozen', False):
+        base = Path(sys.executable).resolve().parent
+    else:
+        base = Path(__file__).resolve().parents[1]
+
+    candidates = [base, *base.parents]
+    best = base
+    best_score = -1
+
+    for candidate in candidates:
+        score = 0
+        if (candidate / 'patelstores.db').exists():
+            score += 4
+        if (candidate / 'products.json').exists():
+            score += 2
+        if (candidate / 'images').is_dir():
+            score += 2
+        if (candidate / 'backup').is_dir():
+            score += 1
+        if (candidate / '.git').exists():
+            score += 2
+
+        if score > best_score:
+            best = candidate
+            best_score = score
+
+    return best
+
+
+ROOT = _resolve_runtime_root()
 sys.path.insert(0, str(ROOT))
 
 from admin.database.db import init_db

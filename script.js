@@ -11,13 +11,14 @@ const SYNCED_ORDERS_KEY = 'patel-stores-synced-orders';
 
 const state = {
   products: [],
+  productById: new Map(),
   filteredProducts: [],
   activeCategory: 'All',
   searchTerm: '',
   cart: JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'),
   user: null,
   pendingOrderCount: 0,
-  searchDebounce: null,
+  searchFrame: 0,
   modalProductId: null,
   modalImageIndex: 0,
   viewer: {
@@ -125,11 +126,14 @@ function bindEvents() {
   elements.logoutBtn.addEventListener('click', handleLogout);
 
   elements.search.addEventListener('input', (event) => {
-    window.clearTimeout(state.searchDebounce);
-    state.searchDebounce = window.setTimeout(() => {
-      state.searchTerm = event.target.value.trim();
+    state.searchTerm = event.target.value.trim();
+    if (state.searchFrame) {
+      window.cancelAnimationFrame(state.searchFrame);
+    }
+    state.searchFrame = window.requestAnimationFrame(() => {
       renderProducts();
-    }, 80);
+      state.searchFrame = 0;
+    });
   });
 
   elements.categoryCards.addEventListener('click', handleCategoryClick);
@@ -171,6 +175,95 @@ function bindEvents() {
   elements.imageViewerShell.addEventListener('touchend', handleViewerTouchEnd, { passive: false });
   document.addEventListener('mousemove', handleViewerMouseMove);
   document.addEventListener('mouseup', handleViewerMouseUp);
+
+  elements.products.addEventListener('click', handleProductsGridClick);
+  elements.products.addEventListener('touchstart', handleProductsGridTouchStart, { passive: true });
+  elements.products.addEventListener('touchmove', handleProductsGridTouchCancel, { passive: true });
+  elements.products.addEventListener('touchend', handleProductsGridTouchCancel, { passive: true });
+  elements.products.addEventListener('touchcancel', handleProductsGridTouchCancel, { passive: true });
+
+  elements.cartItems.addEventListener('click', handleCartItemsClick);
+}
+
+let longPressTimer = null;
+
+function handleProductsGridTouchStart(event) {
+  const trigger = event.target.closest('.product-image-trigger');
+  if (!trigger) return;
+  const productId = trigger.dataset.productId;
+  if (!productId) return;
+
+  longPressTimer = window.setTimeout(() => {
+    const product = getProductById(productId);
+    if (!product) return;
+    openImageViewer(product.images, Number(trigger.dataset.imageIndex || 0));
+    longPressTimer = null;
+  }, 420);
+}
+
+function handleProductsGridTouchCancel() {
+  if (longPressTimer) {
+    window.clearTimeout(longPressTimer);
+    longPressTimer = null;
+  }
+}
+
+function handleProductsGridClick(event) {
+  const addButton = event.target.closest('.add-btn');
+  if (addButton && elements.products.contains(addButton)) {
+    const card = addButton.closest('.product-card');
+    const qtyInput = card?.querySelector('.qty-input');
+    const qty = Math.max(1, parseInt(qtyInput?.value || '1', 10) || 1);
+    addToCart(addButton.dataset.productId, qty);
+    return;
+  }
+
+  const qtyButton = event.target.closest('.qty-btn');
+  if (qtyButton && elements.products.contains(qtyButton)) {
+    const card = qtyButton.closest('.product-card');
+    const qtyInput = card?.querySelector('.qty-input');
+    if (!qtyInput) return;
+    const current = parseInt(qtyInput.value, 10) || 1;
+    const next = qtyButton.dataset.qtyAction === 'plus' ? current + 1 : Math.max(1, current - 1);
+    qtyInput.value = String(next);
+    return;
+  }
+
+  const thumbButton = event.target.closest('.thumb-btn');
+  if (thumbButton && elements.products.contains(thumbButton)) {
+    const card = thumbButton.closest('.product-card');
+    if (!card) return;
+    const index = Number(thumbButton.dataset.thumbIndex || 0);
+    const product = getProductById(card.dataset.productId);
+    if (!product) return;
+    updateCardPrimaryImage(card, product, index);
+    return;
+  }
+
+  const imageTrigger = event.target.closest('.product-image-trigger');
+  if (imageTrigger && elements.products.contains(imageTrigger)) {
+    const product = getProductById(imageTrigger.dataset.productId);
+    if (!product) return;
+    openImageViewer(product.images, Number(imageTrigger.dataset.imageIndex || 0));
+    return;
+  }
+
+  const card = event.target.closest('.product-card');
+  if (!card || !elements.products.contains(card)) {
+    return;
+  }
+  if (event.target.closest('.qty-control, .qty-input')) {
+    return;
+  }
+  openProductModal(card.dataset.productId);
+}
+
+function handleCartItemsClick(event) {
+  const actionButton = event.target.closest('[data-action]');
+  if (!actionButton || !elements.cartItems.contains(actionButton)) {
+    return;
+  }
+  updateCartItem(actionButton.dataset.id, actionButton.dataset.action);
 }
 
 function handleGlobalKeyDown(event) {
@@ -376,6 +469,7 @@ async function loadProducts() {
     const cachedProducts = (await getProductsFromDb()).map(normalizeProduct);
     if (cachedProducts.length) {
       state.products = cachedProducts;
+      refreshProductIndex();
       renderCategoryNavigation();
       renderProducts();
     }
@@ -396,6 +490,7 @@ async function loadProducts() {
     const data = await response.json();
     const products = (data.products || []).map(normalizeProduct);
     state.products = products;
+    refreshProductIndex();
     await saveProductsToDb(products);
     renderCategoryNavigation();
     renderProducts();
@@ -407,23 +502,39 @@ async function loadProducts() {
   }
 }
 
+function refreshProductIndex() {
+  state.productById = new Map(state.products.map((product) => [product.id, product]));
+}
+
+function getProductById(productId) {
+  return state.productById.get(productId) || null;
+}
+
 function normalizeProduct(raw) {
   const price = Number(raw.price || 0);
   const mrpValue = Number(raw.mrp || raw.mrpPrice || raw.mrp_price || 0);
   const stockRaw = raw.stock ?? raw.availableStock ?? raw.inventory ?? null;
   const stock = Number.isFinite(Number(stockRaw)) ? Number(stockRaw) : null;
+  const images = extractProductImages(raw);
+
+  const name = String(raw.name || '').trim();
+  const category = String(raw.category || 'General').trim() || 'General';
+  const description = String(raw.description || '').trim();
+  const barcode = String(raw.barcode || '').trim();
 
   return {
     ...raw,
     id: String(raw.id || '').trim(),
-    name: String(raw.name || '').trim(),
-    category: String(raw.category || 'General').trim() || 'General',
-    description: String(raw.description || '').trim(),
+    name,
+    category,
+    description,
+    barcode,
     price: Number.isFinite(price) ? price : 0,
     mrp: Number.isFinite(mrpValue) && mrpValue > 0 ? mrpValue : null,
     stock,
-    images: extractProductImages(raw),
-    image: extractProductImages(raw)[0]
+    images,
+    image: images[0],
+    searchIndex: `${name} ${category} ${barcode} ${description}`.toLowerCase()
   };
 }
 
@@ -494,8 +605,7 @@ function renderProducts() {
 
   const filtered = state.products.filter((product) => {
     const matchesCategory = state.activeCategory === 'All' || product.category === state.activeCategory;
-    const searchable = `${product.name} ${product.category} ${product.barcode || ''} ${product.description || ''}`.toLowerCase();
-    const matchesSearch = searchable.includes(searchLower);
+    const matchesSearch = product.searchIndex.includes(searchLower);
     return matchesCategory && matchesSearch;
   });
 
@@ -510,7 +620,7 @@ function renderProducts() {
   }
 
   elements.products.innerHTML = filtered.map((product) => createProductCard(product)).join('');
-  wireProductGridInteractions();
+  bindImageLoadEffects(elements.products);
 }
 
 function createProductCard(product) {
@@ -524,7 +634,7 @@ function createProductCard(product) {
     <article class="product-card" data-product-id="${escapeHtml(product.id)}">
       <button class="product-image-trigger" type="button" data-product-id="${escapeHtml(product.id)}" data-image-index="0" aria-label="Open full image">
         <div class="image-shell is-loading">
-          <img class="product-image lazy-image" src="${escapeHtml(primaryImage)}" alt="${escapeHtml(product.name)}" loading="lazy">
+          <img class="product-image lazy-image" src="${escapeHtml(primaryImage)}" alt="${escapeHtml(product.name)}" loading="lazy" decoding="async" fetchpriority="low">
         </div>
         <span class="stock-chip stock-${stockMeta.type}">${escapeHtml(stockMeta.label)}</span>
       </button>
@@ -558,104 +668,13 @@ function createProductCard(product) {
             (src, index) =>
               `<button class="thumb-btn ${index === 0 ? 'active' : ''}" type="button" data-thumb-index="${index}" aria-label="View image ${index + 1}"><img src="${escapeHtml(
                 src
-              )}" alt="${escapeHtml(product.name)} thumbnail ${index + 1}" loading="lazy"></button>`
+              )}" alt="${escapeHtml(product.name)} thumbnail ${index + 1}" loading="lazy" decoding="async" fetchpriority="low"></button>`
           )
           .join('')}
       </div>
       ` : ''}
     </article>
   `;
-}
-
-function wireProductGridInteractions() {
-  const cards = elements.products.querySelectorAll('.product-card');
-
-  cards.forEach((card) => {
-    card.addEventListener('click', (event) => {
-      if (event.target.closest('.qty-control, .add-btn, .qty-btn, .thumb-btn, .product-image-trigger, .qty-input')) {
-        return;
-      }
-      openProductModal(card.dataset.productId);
-    });
-
-    const quantityInput = card.querySelector('.qty-input');
-    card.querySelectorAll('.qty-btn').forEach((button) => {
-      button.addEventListener('click', () => {
-        const current = parseInt(quantityInput.value, 10) || 1;
-        const next = button.dataset.qtyAction === 'plus' ? current + 1 : Math.max(1, current - 1);
-        quantityInput.value = String(next);
-      });
-    });
-
-    const addButton = card.querySelector('.add-btn');
-    addButton.addEventListener('click', () => {
-      const qty = parseInt(quantityInput.value, 10) || 1;
-      addToCart(addButton.dataset.productId, qty);
-    });
-
-    const imageTrigger = card.querySelector('.product-image-trigger');
-    imageTrigger.addEventListener('click', (event) => {
-      event.stopPropagation();
-      const product = state.products.find((item) => item.id === card.dataset.productId);
-      if (product) {
-        openImageViewer(product.images, Number(imageTrigger.dataset.imageIndex || 0));
-      }
-    });
-
-    attachLongPress(imageTrigger, () => {
-      const product = state.products.find((item) => item.id === card.dataset.productId);
-      if (product) {
-        openImageViewer(product.images, Number(imageTrigger.dataset.imageIndex || 0));
-      }
-    });
-
-    card.querySelectorAll('.thumb-btn').forEach((thumbButton) => {
-      thumbButton.addEventListener('click', (event) => {
-        event.stopPropagation();
-        const index = Number(thumbButton.dataset.thumbIndex || 0);
-        const product = state.products.find((item) => item.id === card.dataset.productId);
-        if (!product) return;
-        updateCardPrimaryImage(card, product, index);
-      });
-    });
-  });
-
-  bindImageLoadEffects(elements.products);
-}
-
-function attachLongPress(node, callback) {
-  let timer = null;
-  let moved = false;
-
-  node.addEventListener('touchstart', () => {
-    moved = false;
-    timer = window.setTimeout(() => {
-      callback();
-      timer = null;
-    }, 420);
-  }, { passive: true });
-
-  node.addEventListener('touchmove', () => {
-    moved = true;
-    if (timer) {
-      window.clearTimeout(timer);
-      timer = null;
-    }
-  }, { passive: true });
-
-  node.addEventListener('touchend', () => {
-    if (moved && timer) {
-      window.clearTimeout(timer);
-      timer = null;
-    }
-  }, { passive: true });
-
-  node.addEventListener('touchcancel', () => {
-    if (timer) {
-      window.clearTimeout(timer);
-      timer = null;
-    }
-  }, { passive: true });
 }
 
 function updateCardPrimaryImage(card, product, index) {
@@ -674,7 +693,7 @@ function updateCardPrimaryImage(card, product, index) {
 }
 
 function openProductModal(productId) {
-  const product = state.products.find((item) => item.id === productId);
+  const product = getProductById(productId);
   if (!product) return;
 
   state.modalProductId = productId;
@@ -710,7 +729,7 @@ function renderProductModalGallery(product) {
   elements.productModalImageShell.innerHTML = `
     <button class="modal-image-trigger" type="button" aria-label="Open image viewer">
       <div class="image-shell is-loading">
-        <img class="product-image lazy-image" src="${escapeHtml(currentImage)}" alt="${escapeHtml(product.name)}" loading="lazy">
+        <img class="product-image lazy-image" src="${escapeHtml(currentImage)}" alt="${escapeHtml(product.name)}" loading="lazy" decoding="async" fetchpriority="high">
       </div>
     </button>
   `;
@@ -720,13 +739,12 @@ function renderProductModalGallery(product) {
       (src, index) =>
         `<button class="thumb-btn ${index === state.modalImageIndex ? 'active' : ''}" type="button" data-modal-thumb-index="${index}" aria-label="Image ${index + 1}"><img src="${escapeHtml(
           src
-        )}" alt="${escapeHtml(product.name)} thumbnail ${index + 1}" loading="lazy"></button>`
+        )}" alt="${escapeHtml(product.name)} thumbnail ${index + 1}" loading="lazy" decoding="async" fetchpriority="low"></button>`
     )
     .join('');
 
   const trigger = elements.productModalImageShell.querySelector('.modal-image-trigger');
   trigger.addEventListener('click', () => openImageViewer(product.images, state.modalImageIndex));
-  attachLongPress(trigger, () => openImageViewer(product.images, state.modalImageIndex));
 
   let startX = 0;
   trigger.addEventListener('touchstart', (event) => {
@@ -748,6 +766,7 @@ function renderProductModalGallery(product) {
   });
 
   bindImageLoadEffects(elements.productModalImageShell);
+  preloadAdjacentImages(product.images, state.modalImageIndex);
 }
 
 function closeProductModal() {
@@ -759,7 +778,7 @@ function closeProductModal() {
 
 function shiftProductModalImage(direction) {
   if (!state.modalProductId) return;
-  const product = state.products.find((item) => item.id === state.modalProductId);
+  const product = getProductById(state.modalProductId);
   if (!product || product.images.length <= 1) return;
 
   state.modalImageIndex = (state.modalImageIndex + direction + product.images.length) % product.images.length;
@@ -787,6 +806,7 @@ function openImageViewer(images, startIndex = 0) {
   resetViewerTransform();
 
   renderImageViewer();
+  preloadAdjacentImages(state.viewer.images, state.viewer.index);
   elements.imageViewer.classList.remove('is-hidden');
   elements.imageViewer.setAttribute('aria-hidden', 'false');
   document.body.classList.add('modal-open');
@@ -813,7 +833,7 @@ function renderImageViewer() {
       (src, index) =>
         `<button class="thumb-btn ${index === state.viewer.index ? 'active' : ''}" type="button" data-viewer-index="${index}" aria-label="Image ${index + 1}"><img src="${escapeHtml(
           src
-        )}" alt="Thumbnail ${index + 1}" loading="lazy"></button>`
+        )}" alt="Thumbnail ${index + 1}" loading="lazy" decoding="async" fetchpriority="low"></button>`
     )
     .join('');
 
@@ -827,6 +847,7 @@ function renderImageViewer() {
 
   bindImageLoadEffects(elements.imageViewerShell);
   applyViewerTransform();
+  preloadAdjacentImages(state.viewer.images, state.viewer.index);
 }
 
 function shiftViewerImage(direction) {
@@ -955,6 +976,22 @@ function getTouchDistance(a, b) {
   return Math.sqrt(dx * dx + dy * dy);
 }
 
+function preloadAdjacentImages(images, currentIndex) {
+  if (!Array.isArray(images) || images.length <= 1) {
+    return;
+  }
+
+  const nextIndex = (currentIndex + 1) % images.length;
+  const prevIndex = (currentIndex - 1 + images.length) % images.length;
+
+  [images[nextIndex], images[prevIndex]].forEach((src) => {
+    if (!src) return;
+    const img = new Image();
+    img.decoding = 'async';
+    img.src = src;
+  });
+}
+
 function getStockMeta(stock) {
   if (stock === null || Number.isNaN(stock)) {
     return { label: 'Stock available', type: 'ok' };
@@ -979,7 +1016,7 @@ function getCategoryIcon(category) {
 }
 
 function addToCart(productId, quantity) {
-  const product = state.products.find((item) => item.id === productId);
+  const product = getProductById(productId);
   if (!product) return;
 
   const existingItem = state.cart.find((item) => item.id === productId);
@@ -1046,14 +1083,6 @@ function renderCart() {
       </div>
     `
   );
-
-  elements.cartItems.querySelectorAll('[data-action]').forEach((button) => {
-    button.addEventListener('click', () => {
-      const action = button.dataset.action;
-      const id = button.dataset.id;
-      updateCartItem(id, action);
-    });
-  });
 }
 
 function updateCartItem(productId, action) {
@@ -1223,6 +1252,7 @@ async function saveProductsToDb(products) {
   return new Promise((resolve, reject) => {
     const tx = db.transaction(PRODUCTS_STORE, 'readwrite');
     const store = tx.objectStore(PRODUCTS_STORE);
+    store.clear();
     products.forEach((product) => store.put(product));
     tx.oncomplete = () => resolve();
     tx.onerror = () => reject(tx.error);
@@ -1342,6 +1372,19 @@ async function syncPendingOrders() {
 
 function bindImageLoadEffects(scopeNode) {
   scopeNode.querySelectorAll('img.lazy-image').forEach((img) => {
+    if (img.dataset.boundLoad === '1') {
+      return;
+    }
+    img.dataset.boundLoad = '1';
+
+    if (img.complete) {
+      const shell = img.closest('.image-shell');
+      if (shell) {
+        shell.classList.remove('is-loading');
+      }
+      return;
+    }
+
     img.addEventListener('load', () => {
       const shell = img.closest('.image-shell');
       if (shell) {

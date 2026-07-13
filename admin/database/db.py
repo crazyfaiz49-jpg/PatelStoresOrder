@@ -1,7 +1,38 @@
 import sqlite3
+import sys
 from pathlib import Path
 
-ROOT_DIR = Path(__file__).resolve().parents[2]
+def _resolve_root_dir() -> Path:
+    if getattr(sys, 'frozen', False):
+        base = Path(sys.executable).resolve().parent
+    else:
+        base = Path(__file__).resolve().parents[2]
+
+    candidates = [base, *base.parents]
+    best = base
+    best_score = -1
+
+    for candidate in candidates:
+        score = 0
+        if (candidate / 'patelstores.db').exists():
+            score += 4
+        if (candidate / 'products.json').exists():
+            score += 2
+        if (candidate / 'images').is_dir():
+            score += 2
+        if (candidate / 'backup').is_dir():
+            score += 1
+        if (candidate / '.git').exists():
+            score += 2
+
+        if score > best_score:
+            best = candidate
+            best_score = score
+
+    return best
+
+
+ROOT_DIR = _resolve_root_dir()
 DB_PATH = ROOT_DIR / 'patelstores.db'
 
 
