@@ -16,6 +16,31 @@ PRODUCT_COLUMN_DEFS = {
     'min_stock': 'REAL DEFAULT 0',
 }
 
+RETAILER_COLUMN_DEFS = {
+    'owner_name': 'TEXT DEFAULT ""',
+    'mobile_number': 'TEXT DEFAULT ""',
+    'whatsapp_number': 'TEXT DEFAULT ""',
+    'address': 'TEXT DEFAULT ""',
+    'city': 'TEXT DEFAULT ""',
+    'gst_number': 'TEXT DEFAULT ""',
+    'credit_limit': 'REAL DEFAULT 0',
+    'outstanding_balance': 'REAL DEFAULT 0',
+    'status': 'TEXT DEFAULT "Active"',
+    'created_at': 'TEXT',
+    'updated_at': 'TEXT',
+}
+
+ORDER_COLUMN_DEFS = {
+    'retailer_id': 'INTEGER DEFAULT 0',
+    'order_number': 'TEXT DEFAULT ""',
+    'order_date': 'TEXT DEFAULT ""',
+    'status': 'TEXT DEFAULT "Pending"',
+    'total_amount': 'REAL DEFAULT 0',
+    'notes': 'TEXT DEFAULT ""',
+    'created_at': 'TEXT',
+    'updated_at': 'TEXT',
+}
+
 SETTINGS_COLUMN_DEFS = {
     'commit_message': 'TEXT DEFAULT "Update catalog"',
     'website_folder': 'TEXT DEFAULT "."',
@@ -70,6 +95,22 @@ def init_db():
                 category_name TEXT
             );
 
+            CREATE TABLE IF NOT EXISTS retailers (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                shop_name TEXT,
+                owner_name TEXT DEFAULT '',
+                mobile_number TEXT DEFAULT '',
+                whatsapp_number TEXT DEFAULT '',
+                address TEXT DEFAULT '',
+                city TEXT DEFAULT '',
+                gst_number TEXT DEFAULT '',
+                credit_limit REAL DEFAULT 0,
+                outstanding_balance REAL DEFAULT 0,
+                status TEXT DEFAULT 'Active',
+                created_at TEXT,
+                updated_at TEXT
+            );
+
             CREATE TABLE IF NOT EXISTS settings (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 github_repo TEXT,
@@ -82,12 +123,47 @@ def init_db():
                 database_path TEXT DEFAULT 'patelstores.db',
                 theme TEXT DEFAULT 'dark'
             );
+
+            CREATE TABLE IF NOT EXISTS orders (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                retailer_id INTEGER DEFAULT 0,
+                order_number TEXT DEFAULT '',
+                order_date TEXT DEFAULT '',
+                status TEXT DEFAULT 'Pending',
+                total_amount REAL DEFAULT 0,
+                notes TEXT DEFAULT '',
+                created_at TEXT,
+                updated_at TEXT
+            );
+
+            CREATE TABLE IF NOT EXISTS order_items (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                order_id INTEGER,
+                product_id INTEGER DEFAULT 0,
+                product_name TEXT DEFAULT '',
+                quantity REAL DEFAULT 0,
+                wholesale_price REAL DEFAULT 0,
+                line_total REAL DEFAULT 0
+            );
             """
         )
         for column_name, column_def in PRODUCT_COLUMN_DEFS.items():
             ensure_column(connection, 'products', column_name, column_def)
         for column_name, column_def in SETTINGS_COLUMN_DEFS.items():
             ensure_column(connection, 'settings', column_name, column_def)
+        for column_name, column_def in RETAILER_COLUMN_DEFS.items():
+            ensure_column(connection, 'retailers', column_name, column_def)
+        for column_name, column_def in ORDER_COLUMN_DEFS.items():
+            ensure_column(connection, 'orders', column_name, column_def)
+        connection.execute('CREATE INDEX IF NOT EXISTS idx_retailers_shop_name ON retailers(shop_name)')
+        connection.execute('CREATE INDEX IF NOT EXISTS idx_retailers_mobile_number ON retailers(mobile_number)')
+        connection.execute('CREATE INDEX IF NOT EXISTS idx_retailers_city ON retailers(city)')
+        connection.execute('CREATE INDEX IF NOT EXISTS idx_retailers_status ON retailers(status)')
+        connection.execute('CREATE INDEX IF NOT EXISTS idx_retailers_gst_number ON retailers(gst_number)')
+        connection.execute('CREATE INDEX IF NOT EXISTS idx_orders_number ON orders(order_number)')
+        connection.execute('CREATE INDEX IF NOT EXISTS idx_orders_date ON orders(order_date)')
+        connection.execute('CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(status)')
+        connection.execute('CREATE INDEX IF NOT EXISTS idx_orders_retailer_id ON orders(retailer_id)')
         connection.execute('CREATE INDEX IF NOT EXISTS idx_products_name ON products(product_name)')
         connection.execute('CREATE INDEX IF NOT EXISTS idx_products_category ON products(category)')
         connection.execute('CREATE INDEX IF NOT EXISTS idx_products_barcode ON products(barcode)')
