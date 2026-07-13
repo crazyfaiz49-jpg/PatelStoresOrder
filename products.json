@@ -25,8 +25,8 @@
       "description": "i"
     },
     {
-      "id": "test",
-      "name": "test",
+      "id": "umbrella",
+      "name": "UMBRELLA",
       "category": "General",
       "price": 250.0,
       "image": "images/test.jpg",

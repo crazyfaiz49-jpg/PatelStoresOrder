@@ -696,6 +696,7 @@ class OrderManagementDialog(QtWidgets.QDialog):
         self.table.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         self.table.customContextMenuRequested.connect(self.show_context_menu)
         layout.addWidget(self.table)
+        self.table.setColumnHidden(6, True)
 
         self.status_label = QtWidgets.QLabel('Ready')
         layout.addWidget(self.status_label)
@@ -768,10 +769,13 @@ class OrderManagementDialog(QtWidgets.QDialog):
         dialog = OrderDialog(self)
         if dialog.exec() != QtWidgets.QDialog.Accepted:
             return
-        data = dialog.payload()
-        save_order(data, data['items'])
-        self.refresh_orders()
-        self.changed.emit()
+        try:
+            data = dialog.payload()
+            save_order(data, data['items'])
+            self.refresh_orders()
+            self.changed.emit()
+        except Exception as ex:
+            QtWidgets.QMessageBox.warning(self, 'Create Order', str(ex))
 
     def edit_selected_order(self):
         selected = self._selected_order()
@@ -781,10 +785,13 @@ class OrderManagementDialog(QtWidgets.QDialog):
         dialog = OrderDialog(self, selected)
         if dialog.exec() != QtWidgets.QDialog.Accepted:
             return
-        data = dialog.payload()
-        save_order(data, data['items'], order_id=selected['id'])
-        self.refresh_orders()
-        self.changed.emit()
+        try:
+            data = dialog.payload()
+            save_order(data, data['items'], order_id=selected['id'])
+            self.refresh_orders()
+            self.changed.emit()
+        except Exception as ex:
+            QtWidgets.QMessageBox.warning(self, 'Edit Order', str(ex))
 
     def delete_selected_order(self):
         selected = self._selected_order()
@@ -798,9 +805,12 @@ class OrderManagementDialog(QtWidgets.QDialog):
         )
         if confirm != QtWidgets.QMessageBox.Yes:
             return
-        delete_order(selected['id'])
-        self.refresh_orders()
-        self.changed.emit()
+        try:
+            delete_order(selected['id'])
+            self.refresh_orders()
+            self.changed.emit()
+        except Exception as ex:
+            QtWidgets.QMessageBox.warning(self, 'Delete Order', str(ex))
 
     def print_selected_order(self):
         selected = self._selected_order()
@@ -811,7 +821,10 @@ class OrderManagementDialog(QtWidgets.QDialog):
         dialog = QtPrintSupport.QPrintDialog(printer, self)
         if dialog.exec() != QtWidgets.QDialog.Accepted:
             return
-        print_order(selected['id'], printer)
+        try:
+            print_order(selected['id'], printer)
+        except Exception as ex:
+            QtWidgets.QMessageBox.warning(self, 'Print Order', str(ex))
 
     def export_excel(self):
         file_path, _ = QtWidgets.QFileDialog.getSaveFileName(
@@ -821,7 +834,10 @@ class OrderManagementDialog(QtWidgets.QDialog):
             'Excel (*.xlsx)',
         )
         if file_path:
-            export_orders_excel(file_path)
+            try:
+                export_orders_excel(file_path)
+            except Exception as ex:
+                QtWidgets.QMessageBox.warning(self, 'Export Excel', str(ex))
 
     def export_pdf(self):
         selected = self._selected_order()
@@ -835,7 +851,10 @@ class OrderManagementDialog(QtWidgets.QDialog):
             'PDF (*.pdf)',
         )
         if file_path:
-            export_order_pdf(selected['id'], file_path)
+            try:
+                export_order_pdf(selected['id'], file_path)
+            except Exception as ex:
+                QtWidgets.QMessageBox.warning(self, 'Export PDF', str(ex))
 
     def show_context_menu(self, point):
         menu = QtWidgets.QMenu(self)
@@ -1034,6 +1053,7 @@ class RetailerMasterDialog(QtWidgets.QDialog):
         self.table.customContextMenuRequested.connect(self.show_context_menu)
         self.table.itemDoubleClicked.connect(lambda _: self.edit_selected_retailer())
         layout.addWidget(self.table)
+        self.table.setColumnHidden(10, True)
 
         self.status_label = QtWidgets.QLabel('Ready')
         layout.addWidget(self.status_label)
@@ -1094,7 +1114,11 @@ class RetailerMasterDialog(QtWidgets.QDialog):
                 self.table.setItem(row, col, item)
 
             status_value = (retailer.get('status') or 'Active').lower()
-            color = QtGui.QColor(15, 23, 42) if status_value == 'active' else QtGui.QColor(71, 85, 105)
+            is_dark = self.palette().color(QtGui.QPalette.Window).lightness() < 128
+            if status_value == 'active':
+                color = QtGui.QColor(24, 66, 44) if is_dark else QtGui.QColor(220, 252, 231)
+            else:
+                color = QtGui.QColor(88, 28, 28) if is_dark else QtGui.QColor(254, 226, 226)
             for col in range(11):
                 item = self.table.item(row, col)
                 if item:
@@ -1125,9 +1149,12 @@ class RetailerMasterDialog(QtWidgets.QDialog):
         dialog = RetailerDialog(self)
         if dialog.exec() != QtWidgets.QDialog.Accepted:
             return
-        create_retailer(dialog.payload())
-        self.refresh_retailers()
-        self.changed.emit()
+        try:
+            create_retailer(dialog.payload())
+            self.refresh_retailers()
+            self.changed.emit()
+        except Exception as ex:
+            QtWidgets.QMessageBox.warning(self, 'Add Retailer', str(ex))
 
     def edit_selected_retailer(self):
         selected = self._selected_retailer()
@@ -1137,9 +1164,12 @@ class RetailerMasterDialog(QtWidgets.QDialog):
         dialog = RetailerDialog(self, selected)
         if dialog.exec() != QtWidgets.QDialog.Accepted:
             return
-        update_retailer(selected['id'], dialog.payload())
-        self.refresh_retailers()
-        self.changed.emit()
+        try:
+            update_retailer(selected['id'], dialog.payload())
+            self.refresh_retailers()
+            self.changed.emit()
+        except Exception as ex:
+            QtWidgets.QMessageBox.warning(self, 'Edit Retailer', str(ex))
 
     def delete_selected_retailer(self):
         selected = self._selected_retailer()
@@ -1153,9 +1183,12 @@ class RetailerMasterDialog(QtWidgets.QDialog):
         )
         if confirm != QtWidgets.QMessageBox.Yes:
             return
-        delete_retailer(selected['id'])
-        self.refresh_retailers()
-        self.changed.emit()
+        try:
+            delete_retailer(selected['id'])
+            self.refresh_retailers()
+            self.changed.emit()
+        except Exception as ex:
+            QtWidgets.QMessageBox.warning(self, 'Delete Retailer', str(ex))
 
     def show_context_menu(self, point):
         menu = QtWidgets.QMenu(self)
@@ -1176,14 +1209,17 @@ class RetailerMasterDialog(QtWidgets.QDialog):
         )
         if not file_path:
             return
-        report = import_retailers_from_excel(file_path)
-        self.refresh_retailers()
-        self.changed.emit()
-        QtWidgets.QMessageBox.information(
-            self,
-            'Import Completed',
-            f'Added: {report.added}\nUpdated: {report.updated}\nSkipped: {report.skipped}\nErrors: {report.errors}',
-        )
+        try:
+            report = import_retailers_from_excel(file_path)
+            self.refresh_retailers()
+            self.changed.emit()
+            QtWidgets.QMessageBox.information(
+                self,
+                'Import Completed',
+                f'Added: {report.added}\nUpdated: {report.updated}\nSkipped: {report.skipped}\nErrors: {report.errors}',
+            )
+        except Exception as ex:
+            QtWidgets.QMessageBox.warning(self, 'Import Retailers', str(ex))
 
     def export_excel(self):
         file_path, _ = QtWidgets.QFileDialog.getSaveFileName(
@@ -1193,7 +1229,10 @@ class RetailerMasterDialog(QtWidgets.QDialog):
             'Excel (*.xlsx)',
         )
         if file_path:
-            export_retailers_excel(file_path)
+            try:
+                export_retailers_excel(file_path)
+            except Exception as ex:
+                QtWidgets.QMessageBox.warning(self, 'Export Retailers', str(ex))
 
 
 class AdminWindow(QtWidgets.QMainWindow):
@@ -1327,6 +1366,7 @@ class AdminWindow(QtWidgets.QMainWindow):
         self.table.customContextMenuRequested.connect(self.show_context_menu)
         self.table.itemDoubleClicked.connect(lambda _: self.edit_selected_product())
         root.addWidget(self.table)
+        self.table.setColumnHidden(12, True)
 
         self.status_label = QtWidgets.QLabel('Ready')
         root.addWidget(self.status_label)
@@ -1455,12 +1495,13 @@ class AdminWindow(QtWidgets.QMainWindow):
 
             stock = float(product.get('stock', 0) or 0)
             min_stock = float(product.get('min_stock', 0) or 0)
+            is_dark = self.palette().color(QtGui.QPalette.Window).lightness() < 128
             if stock <= 0:
-                color = QtGui.QColor(127, 29, 29)
+                color = QtGui.QColor(127, 29, 29) if is_dark else QtGui.QColor(254, 226, 226)
             elif stock <= min_stock:
-                color = QtGui.QColor(120, 53, 15)
+                color = QtGui.QColor(120, 53, 15) if is_dark else QtGui.QColor(254, 243, 199)
             else:
-                color = QtGui.QColor(15, 23, 42)
+                color = QtGui.QColor(15, 23, 42) if is_dark else QtGui.QColor(219, 234, 254)
             for col in range(1, 13):
                 item = self.table.item(row, col)
                 if item:
@@ -1482,8 +1523,11 @@ class AdminWindow(QtWidgets.QMainWindow):
         dialog = ProductDialog(self)
         if dialog.exec() != QtWidgets.QDialog.Accepted:
             return
-        create_product(dialog.payload(), dialog.image_source)
-        self.refresh_products()
+        try:
+            create_product(dialog.payload(), dialog.image_source)
+            self.refresh_products()
+        except Exception as ex:
+            QtWidgets.QMessageBox.warning(self, 'Add Product', str(ex))
 
     def edit_selected_product(self):
         selected = self._selected_product()
@@ -1493,16 +1537,22 @@ class AdminWindow(QtWidgets.QMainWindow):
         dialog = ProductDialog(self, selected)
         if dialog.exec() != QtWidgets.QDialog.Accepted:
             return
-        update_product(selected['id'], dialog.payload(), dialog.image_source)
-        self.refresh_products()
+        try:
+            update_product(selected['id'], dialog.payload(), dialog.image_source)
+            self.refresh_products()
+        except Exception as ex:
+            QtWidgets.QMessageBox.warning(self, 'Edit Product', str(ex))
 
     def duplicate_selected_product(self):
         selected = self._selected_product()
         if not selected:
             QtWidgets.QMessageBox.information(self, 'Duplicate Product', 'Select a product to duplicate.')
             return
-        duplicate_product(selected['id'])
-        self.refresh_products()
+        try:
+            duplicate_product(selected['id'])
+            self.refresh_products()
+        except Exception as ex:
+            QtWidgets.QMessageBox.warning(self, 'Duplicate Product', str(ex))
 
     def delete_selected_product(self):
         selected = self._selected_product()
@@ -1516,8 +1566,11 @@ class AdminWindow(QtWidgets.QMainWindow):
         )
         if confirm != QtWidgets.QMessageBox.Yes:
             return
-        delete_product(selected['id'])
-        self.refresh_products()
+        try:
+            delete_product(selected['id'])
+            self.refresh_products()
+        except Exception as ex:
+            QtWidgets.QMessageBox.warning(self, 'Delete Product', str(ex))
 
     def manage_categories(self):
         dialog = CategoryDialog(self)
@@ -1555,13 +1608,16 @@ class AdminWindow(QtWidgets.QMainWindow):
         )
         if not file_path:
             return
-        report = import_products_from_excel(file_path)
-        self.refresh_products()
-        QtWidgets.QMessageBox.information(
-            self,
-            'Import Completed',
-            f'Added: {report.added}\nUpdated: {report.updated}\nSkipped: {report.skipped}\nErrors: {report.errors}',
-        )
+        try:
+            report = import_products_from_excel(file_path)
+            self.refresh_products()
+            QtWidgets.QMessageBox.information(
+                self,
+                'Import Completed',
+                f'Added: {report.added}\nUpdated: {report.updated}\nSkipped: {report.skipped}\nErrors: {report.errors}',
+            )
+        except Exception as ex:
+            QtWidgets.QMessageBox.warning(self, 'Import Products', str(ex))
 
     def export_products(self):
         menu = QtWidgets.QMenu(self)
@@ -1573,15 +1629,24 @@ class AdminWindow(QtWidgets.QMainWindow):
         if action == excel_action:
             file_path, _ = QtWidgets.QFileDialog.getSaveFileName(self, 'Export Excel', str(ROOT / 'products_export.xlsx'), 'Excel (*.xlsx)')
             if file_path:
-                export_products_excel(file_path)
+                try:
+                    export_products_excel(file_path)
+                except Exception as ex:
+                    QtWidgets.QMessageBox.warning(self, 'Export Excel', str(ex))
         elif action == csv_action:
             file_path, _ = QtWidgets.QFileDialog.getSaveFileName(self, 'Export CSV', str(ROOT / 'products_export.csv'), 'CSV (*.csv)')
             if file_path:
-                export_products_csv(file_path)
+                try:
+                    export_products_csv(file_path)
+                except Exception as ex:
+                    QtWidgets.QMessageBox.warning(self, 'Export CSV', str(ex))
         elif action == json_action:
             file_path, _ = QtWidgets.QFileDialog.getSaveFileName(self, 'Export JSON', str(ROOT / 'products_export.json'), 'JSON (*.json)')
             if file_path:
-                export_products_json(file_path)
+                try:
+                    export_products_json(file_path)
+                except Exception as ex:
+                    QtWidgets.QMessageBox.warning(self, 'Export JSON', str(ex))
 
     def open_settings(self):
         dialog = SettingsDialog(self)
