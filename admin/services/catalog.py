@@ -28,6 +28,10 @@ class ImportReport:
     errors: int = 0
 
 
+class PublishError(RuntimeError):
+    pass
+
+
 def slugify(value: str) -> str:
     import re
 
@@ -80,6 +84,67 @@ def save_image_from_path(source_path: str, product_name: str) -> str:
         image.save(target_path, **save_args)
 
     return target_path.name
+
+
+def optimize_image_copy(source_path: Path, target_path: Path):
+    target_path.parent.mkdir(parents=True, exist_ok=True)
+    suffix = target_path.suffix.lower()
+    if suffix in {'.jpg', '.jpeg', '.png'}:
+        with Image.open(source_path) as image:
+            if suffix in {'.jpg', '.jpeg'}:
+                image = image.convert('RGB')
+            image.thumbnail((1600, 1600))
+            save_args = {'optimize': True}
+            if suffix in {'.jpg', '.jpeg'}:
+                save_args['quality'] = 82
+            image.save(target_path, **save_args)
+        return
+
+    shutil.copy2(source_path, target_path)
+
+
+def save_sqlite_database():
+    connection = get_connection()
+    try:
+        connection.commit()
+        try:
+            connection.execute('PRAGMA wal_checkpoint(FULL)')
+        except Exception:
+            logger.debug('SQLite wal_checkpoint skipped', exc_info=True)
+    finally:
+        connection.close()
+
+
+def _git_run(args: List[str], *, allow_failure: bool = False) -> subprocess.CompletedProcess:
+    proc = subprocess.run(['git', *args], cwd=ROOT_DIR, check=False, capture_output=True, text=True)
+    if proc.returncode != 0 and not allow_failure:
+        message = (proc.stderr or proc.stdout or f"git {' '.join(args)} failed").strip()
+        raise PublishError(message)
+    return proc
+
+
+def _require_git_identity():
+    name = _git_run(['config', '--get', 'user.name'], allow_failure=True).stdout.strip()
+    email = _git_run(['config', '--get', 'user.email'], allow_failure=True).stdout.strip()
+    if not name or not email:
+        raise PublishError(
+            'Git is not fully configured. Set user.name and user.email before publishing.'
+        )
+
+
+def _require_git_remote(branch: str):
+    remote = _git_run(['remote', 'get-url', 'origin'], allow_failure=True)
+    remote_url = remote.stdout.strip()
+    if not remote_url:
+        raise PublishError('Git remote "origin" is not configured. Add a GitHub remote before publishing.')
+
+    try:
+        _git_run(['rev-parse', '--is-inside-work-tree'])
+    except PublishError as exc:
+        raise PublishError('This folder is not a Git repository.') from exc
+
+    _git_run(['rev-parse', '--abbrev-ref', 'HEAD'], allow_failure=True)
+    logger.info('Publishing to origin/%s (%s)', branch, remote_url)
 
 
 def _row_to_product(row) -> Dict:
@@ -691,7 +756,9 @@ def create_backup_snapshot() -> Path:
 
     images_target = backup_path / 'images'
     if IMAGES_DIR.exists():
-        shutil.copytree(IMAGES_DIR, images_target, dirs_exist_ok=True)
+        for source_path in IMAGES_DIR.iterdir():
+            if source_path.is_file():
+                optimize_image_copy(source_path, images_target / source_path.name)
 
     return backup_path
 
@@ -705,34 +772,39 @@ def publish_changes(progress: Callable[[int, str], None]) -> Dict:
         logger.info('Publish %s%% - %s', percent, message)
         progress(percent, message)
 
-    step(5, 'Creating backup')
+    step(0, 'Preparing publish')
+    _require_git_identity()
+    _require_git_remote(branch)
+
+    step(5, 'Saving SQLite database')
+    save_sqlite_database()
+
+    step(15, 'Creating backup')
     backup_path = create_backup_snapshot()
 
-    step(20, 'Generating products.json')
+    step(30, 'Generating products.json')
     generate_catalog_json()
 
-    step(35, 'Running git add')
-    subprocess.run(['git', 'add', '.'], cwd=ROOT_DIR, check=True, capture_output=True, text=True)
+    step(45, 'Running git add')
+    _git_run(['add', '.'])
 
-    step(60, 'Running git commit')
-    commit_proc = subprocess.run(
-        ['git', 'commit', '-m', commit_message],
-        cwd=ROOT_DIR,
-        check=False,
-        capture_output=True,
-        text=True,
-    )
+    step(65, 'Running git commit')
+    commit_proc = _git_run(['commit', '-m', commit_message], allow_failure=True)
 
     commit_output = (commit_proc.stdout + '\n' + commit_proc.stderr).lower()
     if commit_proc.returncode != 0 and 'nothing to commit' not in commit_output:
-        raise RuntimeError(commit_proc.stderr.strip() or commit_proc.stdout.strip() or 'Git commit failed.')
+        raise PublishError(commit_proc.stderr.strip() or commit_proc.stdout.strip() or 'Git commit failed.')
 
-    step(85, 'Running git push')
-    subprocess.run(['git', 'push', 'origin', branch], cwd=ROOT_DIR, check=True, capture_output=True, text=True)
+    if commit_proc.returncode == 0:
+        step(85, 'Running git push')
+        _git_run(['push', 'origin', branch])
+    else:
+        step(85, 'No changes to push')
 
     step(100, 'Publish completed')
     return {
         'success': True,
         'backup_path': str(backup_path),
         'branch': branch,
+        'commit_output': commit_proc.stdout.strip() or commit_proc.stderr.strip() or 'Nothing new to commit.',
     }

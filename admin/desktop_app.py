@@ -781,11 +781,11 @@ class AdminWindow(QtWidgets.QMainWindow):
             QtWidgets.QMessageBox.information(
                 self,
                 'Publish Completed',
-                f"Publish successful.\nBackup: {result['backup_path']}\nBranch: {result['branch']}",
+                f"Publish successful.\n\nBackup: {result['backup_path']}\nBranch: {result['branch']}\nDetails: {result['commit_output']}",
             )
         except Exception as ex:
             logger.exception('Publish failed')
-            QtWidgets.QMessageBox.critical(self, 'Publish Failed', str(ex))
+            QtWidgets.QMessageBox.critical(self, 'Publish Failed', f'Publish failed.\n\n{ex}')
         finally:
             self.progress.setVisible(False)
             self.status_label.setText('Ready')
