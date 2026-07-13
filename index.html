@@ -129,33 +129,7 @@
 
 <section class="filter-panel">
 
-<div class="filter-row">
-
-<button class="filter-chip active" data-category="All">
-All
-</button>
-
-<button class="filter-chip" data-category="Bucket">
-Bucket
-</button>
-
-<button class="filter-chip" data-category="Cleaning">
-Cleaning
-</button>
-
-<button class="filter-chip" data-category="Bottle">
-Bottle
-</button>
-
-<button class="filter-chip" data-category="Jerry Can">
-Jerry Can
-</button>
-
-<button class="filter-chip" data-category="Household">
-Household
-</button>
-
-</div>
+<div id="category-cards" class="category-cards" aria-label="Categories"></div>
 
 </section>
 
@@ -197,24 +171,19 @@ class="product-grid">
 </main>
 
 
-<button
-id="cart-toggle"
-class="cart-toggle"
-type="button">
-
-<span>🛒</span>
-
-<span>Cart</span>
-
-<span
-id="cart-count"
-class="cart-badge">
-
-0
-
-</span>
-
-</button>
+<div id="sticky-cart" class="sticky-cart" aria-label="Sticky cart summary">
+    <div class="sticky-cart-summary">
+        <span id="sticky-items" class="sticky-items">0 items</span>
+        <strong id="sticky-total" class="sticky-total">₹0</strong>
+    </div>
+    <div class="sticky-cart-actions">
+        <button id="cart-toggle" class="cart-toggle" type="button" aria-expanded="false">
+            View Cart
+            <span id="cart-count" class="cart-badge">0</span>
+        </button>
+        <button id="sticky-checkout" class="sticky-checkout" type="button">Checkout</button>
+    </div>
+</div>
 
 
 
@@ -259,14 +228,7 @@ aria-label="Close menu">
 
 <div class="menu-section">
 <h4>Categories</h4>
-<div class="filter-row menu-filter-row">
-<button class="filter-chip active" data-category="All">All</button>
-<button class="filter-chip" data-category="Bucket">Bucket</button>
-<button class="filter-chip" data-category="Cleaning">Cleaning</button>
-<button class="filter-chip" data-category="Bottle">Bottle</button>
-<button class="filter-chip" data-category="Jerry Can">Jerry Can</button>
-<button class="filter-chip" data-category="Household">Household</button>
-</div>
+<div id="menu-category-cards" class="filter-row menu-filter-row" aria-label="Categories in menu"></div>
 </div>
 
 </div>
@@ -351,6 +313,53 @@ Place Order
 </form>
 
 </aside>
+
+<section id="product-modal" class="product-modal is-hidden" aria-hidden="true">
+    <div id="product-modal-backdrop" class="product-modal-backdrop"></div>
+    <article class="product-modal-card" role="dialog" aria-modal="true" aria-label="Product details">
+        <button id="close-product-modal" class="icon-btn modal-close-btn" type="button" aria-label="Close details">×</button>
+
+        <div class="product-modal-gallery">
+            <button id="product-modal-prev" class="gallery-nav prev" type="button" aria-label="Previous image">‹</button>
+            <div id="product-modal-image-shell" class="product-modal-image-shell"></div>
+            <button id="product-modal-next" class="gallery-nav next" type="button" aria-label="Next image">›</button>
+        </div>
+        <div id="product-modal-thumbs" class="product-modal-thumbs"></div>
+
+        <div class="product-modal-content">
+            <h3 id="product-modal-name"></h3>
+            <p id="product-modal-category" class="modal-meta"></p>
+            <p id="product-modal-description" class="modal-description"></p>
+            <div class="modal-price-row">
+                <span id="product-modal-price" class="modal-price"></span>
+                <span id="product-modal-mrp" class="modal-mrp"></span>
+            </div>
+            <div id="product-modal-stock" class="modal-stock"></div>
+
+            <div class="modal-actions">
+                <div class="qty-control modal-qty-control">
+                    <button id="product-modal-minus" class="qty-btn" type="button" data-qty-action="minus">−</button>
+                    <input id="product-modal-qty" class="qty-input" type="number" min="1" value="1">
+                    <button id="product-modal-plus" class="qty-btn" type="button" data-qty-action="plus">+</button>
+                </div>
+                <button id="product-modal-add" class="add-btn modal-add-btn" type="button">Add to Cart</button>
+            </div>
+        </div>
+    </article>
+</section>
+
+<section id="image-viewer" class="image-viewer is-hidden" aria-hidden="true">
+    <div id="image-viewer-backdrop" class="image-viewer-backdrop"></div>
+    <div class="image-viewer-frame" role="dialog" aria-modal="true" aria-label="Image viewer">
+        <button id="image-viewer-close" class="icon-btn image-viewer-close" type="button" aria-label="Close image">×</button>
+        <button id="image-viewer-prev" class="gallery-nav prev" type="button" aria-label="Previous image">‹</button>
+        <div id="image-viewer-shell" class="image-viewer-shell">
+            <img id="image-viewer-img" alt="Product image preview">
+        </div>
+        <button id="image-viewer-next" class="gallery-nav next" type="button" aria-label="Next image">›</button>
+        <div id="image-viewer-thumbs" class="image-viewer-thumbs"></div>
+    </div>
+</section>
 
 </div>
 
