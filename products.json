@@ -17,6 +17,78 @@
       "description": ""
     },
     {
+      "id": "10-l-kerba",
+      "name": "10 L KERBA",
+      "category": "KERBA",
+      "price": 63.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "2-l-kerba",
+      "name": "2 L KERBA",
+      "category": "KERBA",
+      "price": 23.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "20-l-kerba",
+      "name": "20 L KERBA",
+      "category": "KERBA",
+      "price": 130.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "5-l-kerba",
+      "name": "5 L KERBA",
+      "category": "KERBA",
+      "price": 37.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "acid-1-l",
+      "name": "ACID (1 L)",
+      "category": "CLEANING SOLUTION",
+      "price": 10.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "atta-charni-patra",
+      "name": "ATTA CHARNI (PATRA)",
+      "category": "Garna",
+      "price": 18.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "barni-nilesh-belly-1000",
+      "name": "BARNI NILESH BELLY 1000",
+      "category": "CONTAINER",
+      "price": 16.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "barni-nilesh-belly-1500",
+      "name": "BARNI NILESH BELLY 1500",
+      "category": "CONTAINER",
+      "price": 20.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "barni-nilesh-belly-500",
+      "name": "BARNI NILESH BELLY 500",
+      "category": "CONTAINER",
+      "price": 8.5,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
       "id": "basket-square",
       "name": "BASKET (SQUARE)",
       "category": "General",
@@ -33,10 +105,42 @@
       "description": ""
     },
     {
+      "id": "bhangi-jharu-plastic",
+      "name": "BHANGI JHARU PLASTIC",
+      "category": "BHANGI JHARU",
+      "price": 140.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "bhangi-jharu-wooden",
+      "name": "BHANGI JHARU WOODEN",
+      "category": "BHANGI JHARU",
+      "price": 155.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
       "id": "bike-napkin-yellow-rumal",
       "name": "BIKE NAPKIN YELLOW RUMAL",
       "category": "General",
       "price": 10.5,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "black-phenail-touch-cleaner-black",
+      "name": "BLACK PHENAIL TOUCH CLEANER BLACK+",
+      "category": "CLEANING SOLUTION",
+      "price": 16.5,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "bliching-water-touch-cleaner-1-l",
+      "name": "BLICHING WATER TOUCH CLEANER (1 L)",
+      "category": "CLEANING SOLUTION",
+      "price": 16.0,
       "image": "images/placeholder.png",
       "description": ""
     },
@@ -49,10 +153,42 @@
       "description": ""
     },
     {
+      "id": "bottle-bubbles-18-lt",
+      "name": "BOTTLE BUBBLES 18 LT",
+      "category": "KERBA",
+      "price": 150.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
       "id": "bottle-china-sports",
       "name": "BOTTLE CHINA SPORTS",
       "category": "General",
       "price": 110.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "bottle-kp-java-500-p-p",
+      "name": "BOTTLE KP JAVA 500 P.P.",
+      "category": "BOTTLE",
+      "price": 8.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "bottle-kp-rolex-0600",
+      "name": "BOTTLE KP ROLEX 0600",
+      "category": "BOTTLE",
+      "price": 21.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "bottle-nilesh-alpha-aqua-diamond",
+      "name": "BOTTLE NILESH ALPHA/AQUA DIAMOND",
+      "category": "BOTTLE",
+      "price": 20.0,
       "image": "images/placeholder.png",
       "description": ""
     },

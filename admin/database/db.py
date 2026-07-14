@@ -83,7 +83,7 @@ SETTINGS_COLUMN_DEFS = {
 
 
 def get_connection():
-    connection = sqlite3.connect(DB_PATH)
+    connection = sqlite3.connect(DB_PATH, timeout=30)
     connection.row_factory = sqlite3.Row
     return connection
 
@@ -102,6 +102,9 @@ def ensure_column(connection, table_name: str, column_name: str, column_def: str
 def init_db():
     connection = get_connection()
     try:
+        # WAL mode allows concurrent reads while a write is in progress,
+        # preventing "database is locked" errors during imports.
+        connection.execute('PRAGMA journal_mode=WAL')
         connection.executescript(
             """
             CREATE TABLE IF NOT EXISTS products (
