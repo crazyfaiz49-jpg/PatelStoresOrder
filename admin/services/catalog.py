@@ -179,6 +179,7 @@ def list_products(
     min_price: Optional[float] = None,
     max_price: Optional[float] = None,
     stock_mode: str = 'all',
+    status: str = 'all',
 ) -> List[Dict]:
     connection = get_connection()
     try:
@@ -203,6 +204,9 @@ def list_products(
             query += ' AND stock > 0 AND stock <= min_stock'
         elif stock_mode == 'in':
             query += ' AND stock > 0'
+        if status and status.lower() != 'all':
+            query += ' AND status = ?'
+            params.append('Inactive' if status.lower() == 'inactive' else 'Active')
         query += ' ORDER BY product_name COLLATE NOCASE ASC'
         rows = connection.execute(query, params).fetchall()
         return [_row_to_product(row) for row in rows]
@@ -254,7 +258,7 @@ def list_products_lookup() -> List[Dict]:
     connection = get_connection()
     try:
         rows = connection.execute(
-            'SELECT id, product_name, wholesale_price, selling_price, price FROM products ORDER BY product_name COLLATE NOCASE ASC'
+            "SELECT id, product_name, wholesale_price, selling_price, price FROM products WHERE COALESCE(status, 'Active') = 'Active' ORDER BY product_name COLLATE NOCASE ASC"
         ).fetchall()
         products = []
         for row in rows:
@@ -917,9 +921,25 @@ def _normalize_payload(payload: Dict) -> Dict:
         'hsn': (payload.get('hsn') or '').strip(),
         'stock': float(payload.get('stock', 0) or 0),
         'min_stock': float(payload.get('min_stock', 0) or 0),
+        'status': 'Inactive' if str(payload.get('status') or 'Active').strip().lower() == 'inactive' else 'Active',
         'image': normalize_image_value(payload.get('image')),
         'price': selling_price,
     }
+
+
+def _ensure_unique_barcode(connection, barcode: str, exclude_id: Optional[int] = None):
+    barcode_clean = (barcode or '').strip()
+    if not barcode_clean:
+        return
+
+    query = 'SELECT id, product_name FROM products WHERE barcode = ?'
+    params: List = [barcode_clean]
+    if exclude_id is not None:
+        query += ' AND id != ?'
+        params.append(exclude_id)
+    row = connection.execute(query, params).fetchone()
+    if row:
+        raise ValueError(f"Barcode already exists for product: {row['product_name']}")
 
 
 def create_product(payload: Dict, image_source: str = ''):
@@ -931,14 +951,15 @@ def create_product(payload: Dict, image_source: str = ''):
     now = datetime.now().isoformat(timespec='seconds')
     connection = get_connection()
     try:
+        _ensure_unique_barcode(connection, data['barcode'])
         connection.execute(
             '''
             INSERT INTO products (
                 product_name, category, price, description, image,
                 purchase_price, selling_price, wholesale_price,
-                barcode, gst, hsn, stock, min_stock,
+                barcode, gst, hsn, stock, min_stock, status,
                 created_at, updated_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ''',
             (
                 data['product_name'],
@@ -954,6 +975,7 @@ def create_product(payload: Dict, image_source: str = ''):
                 data['hsn'],
                 data['stock'],
                 data['min_stock'],
+                data['status'],
                 now,
                 now,
             ),
@@ -990,6 +1012,8 @@ def update_product(product_id: int, payload: Dict, image_source: str = ''):
         if not existing:
             raise ValueError('Product not found.')
 
+        _ensure_unique_barcode(connection, data['barcode'], exclude_id=product_id)
+
         old_image = normalize_image_value(existing['image'])
         data['image'] = data['image'] or old_image
         if image_source:
@@ -1001,7 +1025,7 @@ def update_product(product_id: int, payload: Dict, image_source: str = ''):
             UPDATE products
             SET product_name = ?, category = ?, price = ?, description = ?, image = ?,
                 purchase_price = ?, selling_price = ?, wholesale_price = ?,
-                barcode = ?, gst = ?, hsn = ?, stock = ?, min_stock = ?, updated_at = ?
+                barcode = ?, gst = ?, hsn = ?, stock = ?, min_stock = ?, status = ?, updated_at = ?
             WHERE id = ?
             ''',
             (
@@ -1018,6 +1042,7 @@ def update_product(product_id: int, payload: Dict, image_source: str = ''):
                 data['hsn'],
                 data['stock'],
                 data['min_stock'],
+                data['status'],
                 datetime.now().isoformat(timespec='seconds'),
                 product_id,
             ),
@@ -1047,6 +1072,7 @@ def duplicate_product(product_id: int):
         'hsn': product.get('hsn', ''),
         'stock': product.get('stock', 0),
         'min_stock': product.get('min_stock', 0),
+        'status': product.get('status', 'Active'),
         'image': product.get('image', ''),
     }
     create_product(payload)
@@ -1071,7 +1097,9 @@ def delete_product(product_id: int):
 def generate_catalog_json() -> List[Dict]:
     connection = get_connection()
     try:
-        rows = connection.execute('SELECT * FROM products ORDER BY product_name COLLATE NOCASE ASC').fetchall()
+        rows = connection.execute(
+            "SELECT * FROM products WHERE COALESCE(status, 'Active') = 'Active' ORDER BY product_name COLLATE NOCASE ASC"
+        ).fetchall()
     finally:
         connection.close()
 
@@ -1122,7 +1150,8 @@ def import_products_from_excel(file_path: str) -> ImportReport:
         'hsn': ['hsn', 'hsncode'],
         'stock': ['stock', 'qty', 'quantity'],
         'min_stock': ['minstock', 'minimumstock', 'reorderlevel'],
-        'image': ['image', 'photo', 'photofile'],
+        'status': ['status', 'activeinactive', 'state'],
+        'image': ['image', 'photo', 'photofile', 'imagepath'],
     }
 
     def index_of(field: str) -> Optional[int]:
@@ -1159,6 +1188,7 @@ def import_products_from_excel(file_path: str) -> ImportReport:
                     'hsn': str(row[idx['hsn']]).strip() if idx['hsn'] is not None and row[idx['hsn']] is not None else '',
                     'stock': float(row[idx['stock']]) if idx['stock'] is not None and row[idx['stock']] not in (None, '') else 0,
                     'min_stock': float(row[idx['min_stock']]) if idx['min_stock'] is not None and row[idx['min_stock']] not in (None, '') else 0,
+                    'status': str(row[idx['status']]).strip() if idx['status'] is not None and row[idx['status']] is not None else 'Active',
                     'image': str(row[idx['image']]).strip() if idx['image'] is not None and row[idx['image']] is not None else '',
                 }
                 ensure_category(payload['category'])
@@ -1179,7 +1209,7 @@ def import_products_from_excel(file_path: str) -> ImportReport:
                         UPDATE products
                         SET product_name = ?, category = ?, price = ?, description = ?, image = ?,
                             purchase_price = ?, selling_price = ?, wholesale_price = ?,
-                            barcode = ?, gst = ?, hsn = ?, stock = ?, min_stock = ?, updated_at = ?
+                            barcode = ?, gst = ?, hsn = ?, stock = ?, min_stock = ?, status = ?, updated_at = ?
                         WHERE id = ?
                         ''',
                         (
@@ -1196,6 +1226,7 @@ def import_products_from_excel(file_path: str) -> ImportReport:
                             data['hsn'],
                             data['stock'],
                             data['min_stock'],
+                            data['status'],
                             datetime.now().isoformat(timespec='seconds'),
                             existing['id'],
                         ),
@@ -1209,9 +1240,9 @@ def import_products_from_excel(file_path: str) -> ImportReport:
                         INSERT INTO products (
                             product_name, category, price, description, image,
                             purchase_price, selling_price, wholesale_price,
-                            barcode, gst, hsn, stock, min_stock,
+                            barcode, gst, hsn, stock, min_stock, status,
                             created_at, updated_at
-                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                         ''',
                         (
                             data['product_name'],
@@ -1227,6 +1258,7 @@ def import_products_from_excel(file_path: str) -> ImportReport:
                             data['hsn'],
                             data['stock'],
                             data['min_stock'],
+                            data['status'],
                             now,
                             now,
                         ),
@@ -1257,8 +1289,71 @@ def _product_export_dict(product: Dict) -> Dict:
         'HSN': product.get('hsn', ''),
         'Stock': product.get('stock', 0),
         'Minimum Stock': product.get('min_stock', 0),
+        'Status': product.get('status', 'Active'),
         'Photo': get_catalog_image_path(product.get('image')),
     }
+
+
+def generate_product_import_sample(file_path: str):
+    workbook = Workbook()
+    sheet = workbook.active
+    sheet.title = 'Products Import Sample'
+
+    headers = [
+        'Product Name',
+        'Category',
+        'Purchase Price',
+        'Selling Price',
+        'Wholesale Price',
+        'Barcode',
+        'GST',
+        'HSN',
+        'Stock',
+        'Minimum Stock',
+        'Description',
+        'Status',
+        'Image Path',
+    ]
+    sample_row = [
+        'Sample Product',
+        'General',
+        120.0,
+        150.0,
+        130.0,
+        '1234567890123',
+        18.0,
+        '3923',
+        25,
+        5,
+        'Sample description',
+        'Active',
+        'images/placeholder.svg',
+    ]
+
+    sheet.append(headers)
+    sheet.append(sample_row)
+    workbook.save(file_path)
+
+
+def update_products_status(product_ids: List[int], status: str):
+    valid_status = 'Inactive' if str(status).strip().lower() == 'inactive' else 'Active'
+    ids = [int(pid) for pid in product_ids if int(pid) > 0]
+    if not ids:
+        return
+
+    connection = get_connection()
+    try:
+        placeholders = ','.join(['?'] * len(ids))
+        params: List = [valid_status, datetime.now().isoformat(timespec='seconds'), *ids]
+        connection.execute(
+            f'UPDATE products SET status = ?, updated_at = ? WHERE id IN ({placeholders})',
+            params,
+        )
+        connection.commit()
+    finally:
+        connection.close()
+
+    generate_catalog_json()
 
 
 def export_products_excel(file_path: str):

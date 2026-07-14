@@ -45,6 +45,7 @@ PRODUCT_COLUMN_DEFS = {
     'hsn': 'TEXT DEFAULT ""',
     'stock': 'REAL DEFAULT 0',
     'min_stock': 'REAL DEFAULT 0',
+    'status': 'TEXT DEFAULT "Active"',
 }
 
 RETAILER_COLUMN_DEFS = {
@@ -117,6 +118,7 @@ def init_db():
                 hsn TEXT DEFAULT '',
                 stock REAL DEFAULT 0,
                 min_stock REAL DEFAULT 0,
+                status TEXT DEFAULT 'Active',
                 created_at TEXT,
                 updated_at TEXT
             );
@@ -198,12 +200,14 @@ def init_db():
         connection.execute('CREATE INDEX IF NOT EXISTS idx_products_name ON products(product_name)')
         connection.execute('CREATE INDEX IF NOT EXISTS idx_products_category ON products(category)')
         connection.execute('CREATE INDEX IF NOT EXISTS idx_products_barcode ON products(barcode)')
+        connection.execute('CREATE INDEX IF NOT EXISTS idx_products_status ON products(status)')
         connection.execute(
             'UPDATE products SET selling_price = COALESCE(NULLIF(selling_price, 0), price, 0)'
         )
         connection.execute(
             'UPDATE products SET price = COALESCE(NULLIF(price, 0), selling_price, 0)'
         )
+        connection.execute("UPDATE products SET status = 'Active' WHERE status IS NULL OR TRIM(status) = ''")
         connection.commit()
         seed_defaults(connection)
     finally:

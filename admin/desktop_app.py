@@ -53,6 +53,7 @@ from admin.services.catalog import (
     export_products_csv,
     export_products_excel,
     export_products_json,
+    generate_product_import_sample,
     get_order,
     get_retailer,
     get_settings,
@@ -70,6 +71,7 @@ from admin.services.catalog import (
     print_order,
     update_retailer,
     update_product,
+    update_products_status,
     update_settings,
 )
 from admin.utils.logger import get_logger
@@ -108,10 +110,49 @@ class ProductDialog(QtWidgets.QDialog):
         self.image_source = ''
         self.setWindowTitle('Add Product' if product is None else 'Edit Product')
         self.resize(720, 620)
+        self._input_widgets = []
         self._build_ui()
         self._load_categories()
         if product:
             self._fill_form()
+        QtCore.QTimer.singleShot(0, self.product_name.setFocus)
+
+    def _register_keyboard_flow(self):
+        self._input_widgets = [
+            self.product_name,
+            self.category,
+            self.purchase_price,
+            self.selling_price,
+            self.wholesale_price,
+            self.barcode,
+            self.gst,
+            self.hsn,
+            self.stock,
+            self.min_stock,
+            self.status,
+            self.description,
+        ]
+        for widget in self._input_widgets:
+            widget.installEventFilter(self)
+
+    def _update_margin_label(self):
+        cost = float(self.purchase_price.value() or 0)
+        sell = float(self.selling_price.value() or 0)
+        margin = 0.0 if sell <= 0 else ((sell - cost) / sell) * 100
+        self.margin_label.setText(f'Margin: {margin:.2f}%')
+
+    def eventFilter(self, obj, event):
+        if event.type() == QtCore.QEvent.KeyPress and event.key() in (QtCore.Qt.Key_Return, QtCore.Qt.Key_Enter):
+            if obj in self._input_widgets:
+                self.focusNextChild()
+                return True
+        return super().eventFilter(obj, event)
+
+    def keyPressEvent(self, event):
+        if event.key() == QtCore.Qt.Key_Escape:
+            self.reject()
+            return
+        super().keyPressEvent(event)
 
     def _build_ui(self):
         layout = QtWidgets.QVBoxLayout(self)
@@ -148,6 +189,12 @@ class ProductDialog(QtWidgets.QDialog):
         self.min_stock = QtWidgets.QDoubleSpinBox()
         self.min_stock.setRange(0, 999999)
         self.min_stock.setDecimals(2)
+
+        self.status = QtWidgets.QComboBox()
+        self.status.addItems(['Active', 'Inactive'])
+
+        self.margin_label = QtWidgets.QLabel('Margin: 0.00%')
+        self.margin_label.setStyleSheet('font-weight: 600; color: #0ea5e9;')
 
         self.description = QtWidgets.QPlainTextEdit()
         self.description.setMaximumHeight(120)
@@ -191,6 +238,11 @@ class ProductDialog(QtWidgets.QDialog):
         form.addWidget(QtWidgets.QLabel('Description'), row, 0)
         form.addWidget(self.description, row, 1, 1, 3)
 
+        row += 1
+        form.addWidget(QtWidgets.QLabel('Status'), row, 0)
+        form.addWidget(self.status, row, 1)
+        form.addWidget(self.margin_label, row, 2, 1, 2)
+
         layout.addLayout(form)
 
         image_row = QtWidgets.QHBoxLayout()
@@ -212,6 +264,11 @@ class ProductDialog(QtWidgets.QDialog):
         buttons.accepted.connect(self._on_save)
         buttons.rejected.connect(self.reject)
         layout.addWidget(buttons)
+
+        self.purchase_price.valueChanged.connect(self._update_margin_label)
+        self.selling_price.valueChanged.connect(self._update_margin_label)
+        self._register_keyboard_flow()
+        self._update_margin_label()
 
     def _load_categories(self):
         current = self.category.currentText()
@@ -240,11 +297,13 @@ class ProductDialog(QtWidgets.QDialog):
         self.hsn.setText(self.product.get('hsn', ''))
         self.stock.setValue(float(self.product.get('stock', 0) or 0))
         self.min_stock.setValue(float(self.product.get('min_stock', 0) or 0))
+        self.status.setCurrentText(self.product.get('status', 'Active'))
         self.description.setPlainText(self.product.get('description', ''))
         image_path = self.product.get('image_path', '')
         if image_path:
             self.image_info.setText(image_path)
             self._set_preview(str(ROOT / image_path.replace('/', '\\')))
+        self._update_margin_label()
 
     def _choose_image(self):
         file_path, _ = QtWidgets.QFileDialog.getOpenFileName(
@@ -292,6 +351,7 @@ class ProductDialog(QtWidgets.QDialog):
             'hsn': self.hsn.text().strip(),
             'stock': self.stock.value(),
             'min_stock': self.min_stock.value(),
+            'status': self.status.currentText(),
             'image': self.product.get('image', '') if self.product else '',
         }
 
@@ -1272,6 +1332,8 @@ class AdminWindow(QtWidgets.QMainWindow):
         self.settings = get_settings()
         self.products = []
         self.current_theme = self.settings.get('theme', 'dark')
+        self._restoring_layout = False
+        self._frozen_columns = {1, 2}
         self._build_ui()
         self._build_shortcuts()
         self._apply_theme(self.current_theme)
@@ -1359,21 +1421,29 @@ class AdminWindow(QtWidgets.QMainWindow):
         self.stock_filter.addItems(['All Stock', 'In Stock', 'Out of Stock', 'Low Stock'])
         self.stock_filter.currentIndexChanged.connect(self.refresh_products)
 
+        self.status_filter = QtWidgets.QComboBox()
+        self.status_filter.addItems(['All Status', 'Active', 'Inactive'])
+        self.status_filter.currentIndexChanged.connect(self.refresh_products)
+
         filters.addWidget(self.search, 3)
         filters.addWidget(self.category_filter, 1)
         filters.addWidget(self.min_price_filter, 1)
         filters.addWidget(self.max_price_filter, 1)
         filters.addWidget(self.stock_filter, 1)
+        filters.addWidget(self.status_filter, 1)
         root.addLayout(filters)
 
-        self.table = QtWidgets.QTableWidget(0, 13)
+        self.table = QtWidgets.QTableWidget(0, 16)
         self.table.setHorizontalHeaderLabels(
             [
+                'Sel',
                 'Photo',
                 'Product Name',
                 'Category',
+                'Status',
                 'Purchase Price',
                 'Selling Price',
+                'Margin %',
                 'Wholesale Price',
                 'Barcode',
                 'GST',
@@ -1386,17 +1456,26 @@ class AdminWindow(QtWidgets.QMainWindow):
         )
         self.table.setSortingEnabled(True)
         self.table.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
-        self.table.setSelectionMode(QtWidgets.QAbstractItemView.SingleSelection)
+        self.table.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
         self.table.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
+        self.table.setAlternatingRowColors(True)
+        self.table.setVerticalScrollMode(QtWidgets.QAbstractItemView.ScrollPerPixel)
+        self.table.setHorizontalScrollMode(QtWidgets.QAbstractItemView.ScrollPerPixel)
+        self.table.setWordWrap(False)
         self.table.verticalHeader().setVisible(False)
-        self.table.horizontalHeader().setStretchLastSection(True)
+        self.table.horizontalHeader().setStretchLastSection(False)
         self.table.horizontalHeader().setSectionsMovable(True)
         self.table.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Interactive)
+        self.table.horizontalHeader().sectionMoved.connect(self._on_header_section_moved)
+        self.table.horizontalHeader().sectionResized.connect(self._persist_table_layout)
         self.table.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         self.table.customContextMenuRequested.connect(self.show_context_menu)
         self.table.itemDoubleClicked.connect(lambda _: self.edit_selected_product())
+        self.table.itemChanged.connect(self._on_row_check_changed)
         root.addWidget(self.table)
-        self.table.setColumnHidden(12, True)
+        self.table.setColumnHidden(15, True)
+
+        self._restore_table_layout()
 
         self.status_label = QtWidgets.QLabel('Ready')
         root.addWidget(self.status_label)
@@ -1408,10 +1487,85 @@ class AdminWindow(QtWidgets.QMainWindow):
 
     def _build_shortcuts(self):
         QtGui.QShortcut(QtGui.QKeySequence('Ctrl+N'), self, self.add_product)
+        QtGui.QShortcut(QtGui.QKeySequence('Ctrl+E'), self, self.edit_selected_product)
+        QtGui.QShortcut(QtGui.QKeySequence('Ctrl+D'), self, self.duplicate_selected_product)
+        QtGui.QShortcut(QtGui.QKeySequence('Ctrl+I'), self, self.import_excel)
+        QtGui.QShortcut(QtGui.QKeySequence('Ctrl+Shift+I'), self, self.download_import_sample)
         QtGui.QShortcut(QtGui.QKeySequence('Ctrl+S'), self, self.publish)
+        QtGui.QShortcut(QtGui.QKeySequence('Ctrl+R'), self, self.refresh_products)
         QtGui.QShortcut(QtGui.QKeySequence('Ctrl+F'), self, self.focus_search)
+        QtGui.QShortcut(QtGui.QKeySequence('Ctrl+A'), self, self.table.selectAll)
+        QtGui.QShortcut(QtGui.QKeySequence('Space'), self, self.toggle_selected_product_status)
         QtGui.QShortcut(QtGui.QKeySequence('Delete'), self, self.delete_selected_product)
         QtGui.QShortcut(QtGui.QKeySequence('F5'), self, self.refresh_products)
+
+    def _settings_store(self):
+        return QtCore.QSettings('PatelStores', 'AdminPanel')
+
+    def _persist_table_layout(self):
+        if self._restoring_layout:
+            return
+        header = self.table.horizontalHeader()
+        store = self._settings_store()
+        widths = [self.table.columnWidth(i) for i in range(self.table.columnCount())]
+        visual = [header.visualIndex(i) for i in range(self.table.columnCount())]
+        store.setValue('products.table.widths', widths)
+        store.setValue('products.table.visualOrder', visual)
+
+    def _restore_table_layout(self):
+        store = self._settings_store()
+        widths = store.value('products.table.widths', [])
+        visual = store.value('products.table.visualOrder', [])
+
+        self._restoring_layout = True
+        try:
+            if isinstance(widths, list) and len(widths) == self.table.columnCount():
+                for idx, value in enumerate(widths):
+                    try:
+                        self.table.setColumnWidth(idx, int(value))
+                    except Exception:
+                        pass
+            if isinstance(visual, list) and len(visual) == self.table.columnCount():
+                header = self.table.horizontalHeader()
+                for logical, visual_idx in enumerate(visual):
+                    try:
+                        header.moveSection(header.visualIndex(logical), int(visual_idx))
+                    except Exception:
+                        pass
+        finally:
+            self._restoring_layout = False
+
+    def _on_header_section_moved(self, logical_index, old_visual_index, new_visual_index):
+        if self._restoring_layout:
+            return
+        header = self.table.horizontalHeader()
+        if logical_index in self._frozen_columns:
+            self._restoring_layout = True
+            try:
+                target = 1 if logical_index == 1 else 2
+                header.moveSection(header.visualIndex(logical_index), target)
+            finally:
+                self._restoring_layout = False
+            return
+        if new_visual_index < 3:
+            self._restoring_layout = True
+            try:
+                header.moveSection(header.visualIndex(logical_index), old_visual_index)
+            finally:
+                self._restoring_layout = False
+            return
+        self._persist_table_layout()
+
+    def _on_row_check_changed(self, item):
+        if item.column() != 0:
+            return
+        checked = item.checkState() == QtCore.Qt.Checked
+        row = item.row()
+        model = self.table.selectionModel()
+        if checked:
+            model.select(self.table.model().index(row, 0), QtCore.QItemSelectionModel.Select | QtCore.QItemSelectionModel.Rows)
+        else:
+            model.select(self.table.model().index(row, 0), QtCore.QItemSelectionModel.Deselect | QtCore.QItemSelectionModel.Rows)
 
     def _apply_theme(self, theme: str):
         if theme == 'light':
@@ -1419,6 +1573,12 @@ class AdminWindow(QtWidgets.QMainWindow):
                 QWidget { background: #f8fafc; color: #0f172a; }
                 QLineEdit, QPlainTextEdit, QComboBox, QDoubleSpinBox, QTableWidget {
                     background: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px; padding: 4px;
+                }
+                QTableWidget {
+                    alternate-background-color: #f1f5f9;
+                    selection-background-color: #bfdbfe;
+                    selection-color: #0f172a;
+                    gridline-color: #e2e8f0;
                 }
                 QPushButton { background: #2563eb; color: #ffffff; border-radius: 10px; padding: 8px 12px; }
                 QPushButton:hover { background: #1d4ed8; }
@@ -1428,6 +1588,12 @@ class AdminWindow(QtWidgets.QMainWindow):
                 QWidget { background: #0f172a; color: #e2e8f0; }
                 QLineEdit, QPlainTextEdit, QComboBox, QDoubleSpinBox, QTableWidget {
                     background: #111827; border: 1px solid #334155; border-radius: 8px; padding: 4px;
+                }
+                QTableWidget {
+                    alternate-background-color: #1f2937;
+                    selection-background-color: #1e3a8a;
+                    selection-color: #e2e8f0;
+                    gridline-color: #334155;
                 }
                 QPushButton { background: #334155; color: #e2e8f0; border-radius: 10px; padding: 8px 12px; }
                 QPushButton:hover { background: #475569; }
@@ -1446,10 +1612,19 @@ class AdminWindow(QtWidgets.QMainWindow):
         row = self.table.currentRow()
         if row < 0:
             return None
-        id_item = self.table.item(row, 12)
+        id_item = self.table.item(row, 15)
         if not id_item:
             return None
         return int(id_item.text())
+
+    def _selected_product_ids(self):
+        rows = {index.row() for index in self.table.selectionModel().selectedRows()}
+        ids = []
+        for row in rows:
+            item = self.table.item(row, 15)
+            if item and item.text().strip():
+                ids.append(int(item.text()))
+        return ids
 
     def _populate_category_filter(self):
         current = self.category_filter.currentText()
@@ -1484,30 +1659,45 @@ class AdminWindow(QtWidgets.QMainWindow):
             min_price=self.min_price_filter.value() if self.min_price_filter.value() > 0 else None,
             max_price=self.max_price_filter.value() if self.max_price_filter.value() > 0 else None,
             stock_mode=stock_mode,
+            status=self.status_filter.currentText().replace(' Status', '').lower(),
         )
 
         self.table.setSortingEnabled(False)
+        self.table.blockSignals(True)
         self.table.setRowCount(0)
 
         for product in self.products:
             row = self.table.rowCount()
             self.table.insertRow(row)
+            self.table.setRowHeight(row, 66)
+
+            selector = QtWidgets.QTableWidgetItem('')
+            selector.setFlags(QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsUserCheckable | QtCore.Qt.ItemIsSelectable)
+            selector.setCheckState(QtCore.Qt.Unchecked)
+            selector.setTextAlignment(QtCore.Qt.AlignCenter)
+            self.table.setItem(row, 0, selector)
 
             image_widget = QtWidgets.QLabel()
             image_widget.setAlignment(QtCore.Qt.AlignCenter)
-            image_widget.setFixedSize(58, 58)
+            image_widget.setFixedSize(60, 60)
             pix = QtGui.QPixmap(str(ROOT / product.get('image_path', '').replace('/', '\\')))
             if not pix.isNull():
-                image_widget.setPixmap(pix.scaled(54, 54, QtCore.Qt.KeepAspectRatio, QtCore.Qt.SmoothTransformation))
+                image_widget.setPixmap(pix.scaled(56, 56, QtCore.Qt.KeepAspectRatio, QtCore.Qt.SmoothTransformation))
             else:
                 image_widget.setText('N/A')
-            self.table.setCellWidget(row, 0, image_widget)
+            self.table.setCellWidget(row, 1, image_widget)
+
+            selling_price = float(product.get('selling_price', product.get('price', 0)) or 0)
+            purchase_price = float(product.get('purchase_price', 0) or 0)
+            margin = 0.0 if selling_price <= 0 else ((selling_price - purchase_price) / selling_price) * 100
 
             values = [
                 product.get('product_name', ''),
                 product.get('category', ''),
-                f"{float(product.get('purchase_price', 0) or 0):.2f}",
-                f"{float(product.get('selling_price', product.get('price', 0)) or 0):.2f}",
+                product.get('status', 'Active') or 'Active',
+                f"{purchase_price:.2f}",
+                f"{selling_price:.2f}",
+                f"{margin:.2f}",
                 f"{float(product.get('wholesale_price', 0) or 0):.2f}",
                 product.get('barcode', ''),
                 f"{float(product.get('gst', 0) or 0):.2f}",
@@ -1517,10 +1707,16 @@ class AdminWindow(QtWidgets.QMainWindow):
                 product.get('description', ''),
                 str(product.get('id', '')),
             ]
-            for col, value in enumerate(values, start=1):
+            for col, value in enumerate(values, start=2):
                 item = QtWidgets.QTableWidgetItem(value)
-                if col in {3, 4, 5, 7, 9, 10}:
+                if col in {5, 6, 7, 8, 10, 12, 13}:
                     item.setTextAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+                if col == 4:
+                    status_value = (value or 'Active').lower()
+                    if status_value == 'active':
+                        item.setForeground(QtGui.QColor('#15803d'))
+                    else:
+                        item.setForeground(QtGui.QColor('#b91c1c'))
                 self.table.setItem(row, col, item)
 
             stock = float(product.get('stock', 0) or 0)
@@ -1532,12 +1728,19 @@ class AdminWindow(QtWidgets.QMainWindow):
                 color = QtGui.QColor(120, 53, 15) if is_dark else QtGui.QColor(254, 243, 199)
             else:
                 color = QtGui.QColor(15, 23, 42) if is_dark else QtGui.QColor(219, 234, 254)
-            for col in range(1, 13):
+            for col in range(2, 16):
                 item = self.table.item(row, col)
                 if item:
                     item.setBackground(color)
 
+        self.table.blockSignals(False)
+        self.table.resizeColumnsToContents()
+        self.table.setColumnWidth(0, 40)
+        self.table.setColumnWidth(1, 70)
+        self.table.setColumnWidth(2, max(200, self.table.columnWidth(2)))
+        self.table.setColumnWidth(14, max(260, self.table.columnWidth(14)))
         self.table.setSortingEnabled(True)
+        self._persist_table_layout()
         self.status_label.setText(f'{len(self.products)} products loaded')
 
     def _selected_product(self):
@@ -1616,10 +1819,19 @@ class AdminWindow(QtWidgets.QMainWindow):
         dialog.exec()
 
     def show_context_menu(self, point):
+        row = self.table.rowAt(point.y())
+        if row >= 0 and not self.table.selectionModel().isRowSelected(row, QtCore.QModelIndex()):
+            self.table.selectRow(row)
+
         menu = QtWidgets.QMenu(self)
         edit_action = menu.addAction('Edit')
         duplicate_action = menu.addAction('Duplicate')
         delete_action = menu.addAction('Delete')
+        menu.addSeparator()
+        activate_action = menu.addAction('Activate')
+        deactivate_action = menu.addAction('Deactivate')
+        bulk_activate_action = menu.addAction('Bulk Activate')
+        bulk_deactivate_action = menu.addAction('Bulk Deactivate')
         action = menu.exec(self.table.mapToGlobal(point))
 
         if action == edit_action:
@@ -1628,8 +1840,62 @@ class AdminWindow(QtWidgets.QMainWindow):
             self.duplicate_selected_product()
         elif action == delete_action:
             self.delete_selected_product()
+        elif action == activate_action:
+            self._set_selected_products_status('Active')
+        elif action == deactivate_action:
+            self._set_selected_products_status('Inactive')
+        elif action == bulk_activate_action:
+            self._set_selected_products_status('Active', bulk=True)
+        elif action == bulk_deactivate_action:
+            self._set_selected_products_status('Inactive', bulk=True)
+
+    def _set_selected_products_status(self, status: str, bulk: bool = False):
+        product_ids = self._selected_product_ids()
+        if not product_ids:
+            selected = self._selected_product()
+            if selected:
+                product_ids = [int(selected['id'])]
+        if not product_ids:
+            return
+
+        if bulk and len(product_ids) < 2:
+            QtWidgets.QMessageBox.information(self, 'Bulk Status Update', 'Select multiple rows for bulk update.')
+            return
+
+        try:
+            update_products_status(product_ids, status)
+            self.refresh_products()
+        except Exception as ex:
+            QtWidgets.QMessageBox.warning(self, 'Update Status', str(ex))
+
+    def toggle_selected_product_status(self):
+        product_ids = self._selected_product_ids()
+        if not product_ids:
+            return
+        selected_products = [p for p in self.products if int(p.get('id', 0)) in set(product_ids)]
+        if not selected_products:
+            return
+        if all((p.get('status', 'Active') or 'Active').lower() == 'active' for p in selected_products):
+            self._set_selected_products_status('Inactive', bulk=len(product_ids) > 1)
+        else:
+            self._set_selected_products_status('Active', bulk=len(product_ids) > 1)
 
     def import_excel(self):
+        action_dialog = QtWidgets.QMessageBox(self)
+        action_dialog.setWindowTitle('Import Products')
+        action_dialog.setText('Choose an action for product Excel import.')
+        import_btn = action_dialog.addButton('Import Excel', QtWidgets.QMessageBox.AcceptRole)
+        sample_btn = action_dialog.addButton('Download Sample Excel', QtWidgets.QMessageBox.ActionRole)
+        action_dialog.addButton(QtWidgets.QMessageBox.Cancel)
+        action_dialog.exec()
+
+        clicked = action_dialog.clickedButton()
+        if clicked == sample_btn:
+            self.download_import_sample()
+            return
+        if clicked != import_btn:
+            return
+
         file_path, _ = QtWidgets.QFileDialog.getOpenFileName(
             self,
             'Import Products From Excel',
@@ -1648,6 +1914,21 @@ class AdminWindow(QtWidgets.QMainWindow):
             )
         except Exception as ex:
             QtWidgets.QMessageBox.warning(self, 'Import Products', str(ex))
+
+    def download_import_sample(self):
+        file_path, _ = QtWidgets.QFileDialog.getSaveFileName(
+            self,
+            'Download Sample Product Excel',
+            str(ROOT / 'products_import_sample.xlsx'),
+            'Excel (*.xlsx)',
+        )
+        if not file_path:
+            return
+        try:
+            generate_product_import_sample(file_path)
+            QtWidgets.QMessageBox.information(self, 'Sample Generated', f'Sample file created at:\n{file_path}')
+        except Exception as ex:
+            QtWidgets.QMessageBox.warning(self, 'Sample Generation', str(ex))
 
     def export_products(self):
         menu = QtWidgets.QMenu(self)
@@ -1714,6 +1995,10 @@ class AdminWindow(QtWidgets.QMainWindow):
             self.progress.setVisible(False)
             self.status_label.setText('Ready')
             self.refresh_products()
+
+    def closeEvent(self, event):
+        self._persist_table_layout()
+        super().closeEvent(event)
 
 
 def _handle_exception(exc_type, exc_value, exc_traceback):
