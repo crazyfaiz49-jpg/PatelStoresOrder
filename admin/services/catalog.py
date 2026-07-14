@@ -176,8 +176,13 @@ def _row_to_order(row) -> Dict:
 def list_products(
     search: str = '',
     category: str = '',
+    supplier: str = '',
     min_price: Optional[float] = None,
     max_price: Optional[float] = None,
+    min_stock: Optional[float] = None,
+    max_stock: Optional[float] = None,
+    gst: Optional[float] = None,
+    barcode: str = '',
     stock_mode: str = 'all',
     status: str = 'all',
 ) -> List[Dict]:
@@ -192,12 +197,27 @@ def list_products(
         if category and category.lower() != 'all':
             query += ' AND category = ?'
             params.append(category)
+        if supplier and supplier.lower() != 'all':
+            query += ' AND supplier = ?'
+            params.append(supplier)
         if min_price is not None:
             query += ' AND selling_price >= ?'
             params.append(float(min_price))
         if max_price is not None and max_price > 0:
             query += ' AND selling_price <= ?'
             params.append(float(max_price))
+        if min_stock is not None:
+            query += ' AND stock >= ?'
+            params.append(float(min_stock))
+        if max_stock is not None and max_stock > 0:
+            query += ' AND stock <= ?'
+            params.append(float(max_stock))
+        if gst is not None:
+            query += ' AND gst = ?'
+            params.append(float(gst))
+        if barcode:
+            query += ' AND barcode LIKE ?'
+            params.append(f'%{barcode.strip()}%')
         if stock_mode == 'out':
             query += ' AND stock <= 0'
         elif stock_mode == 'low':
@@ -916,6 +936,7 @@ def _normalize_payload(payload: Dict) -> Dict:
         'selling_price': selling_price,
         'wholesale_price': wholesale_price,
         'barcode': (payload.get('barcode') or '').strip(),
+        'supplier': (payload.get('supplier') or '').strip(),
         'description': (payload.get('description') or '').strip(),
         'gst': float(payload.get('gst', 0) or 0),
         'hsn': (payload.get('hsn') or '').strip(),
@@ -957,9 +978,9 @@ def create_product(payload: Dict, image_source: str = ''):
             INSERT INTO products (
                 product_name, category, price, description, image,
                 purchase_price, selling_price, wholesale_price,
-                barcode, gst, hsn, stock, min_stock, status,
+                barcode, gst, hsn, stock, min_stock, status, supplier,
                 created_at, updated_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ''',
             (
                 data['product_name'],
@@ -976,6 +997,7 @@ def create_product(payload: Dict, image_source: str = ''):
                 data['stock'],
                 data['min_stock'],
                 data['status'],
+                data['supplier'],
                 now,
                 now,
             ),
@@ -1025,7 +1047,7 @@ def update_product(product_id: int, payload: Dict, image_source: str = ''):
             UPDATE products
             SET product_name = ?, category = ?, price = ?, description = ?, image = ?,
                 purchase_price = ?, selling_price = ?, wholesale_price = ?,
-                barcode = ?, gst = ?, hsn = ?, stock = ?, min_stock = ?, status = ?, updated_at = ?
+                barcode = ?, gst = ?, hsn = ?, stock = ?, min_stock = ?, status = ?, supplier = ?, updated_at = ?
             WHERE id = ?
             ''',
             (
@@ -1043,6 +1065,7 @@ def update_product(product_id: int, payload: Dict, image_source: str = ''):
                 data['stock'],
                 data['min_stock'],
                 data['status'],
+                data['supplier'],
                 datetime.now().isoformat(timespec='seconds'),
                 product_id,
             ),
@@ -1073,6 +1096,7 @@ def duplicate_product(product_id: int):
         'stock': product.get('stock', 0),
         'min_stock': product.get('min_stock', 0),
         'status': product.get('status', 'Active'),
+        'supplier': product.get('supplier', ''),
         'image': product.get('image', ''),
     }
     create_product(payload)
@@ -1141,6 +1165,7 @@ def import_products_from_excel(file_path: str) -> ImportReport:
     aliases = {
         'product_name': ['productname', 'name', 'itemname'],
         'category': ['category', 'group'],
+        'supplier': ['supplier', 'brand', 'vendor'],
         'purchase_price': ['purchaseprice', 'buyprice', 'costprice'],
         'selling_price': ['sellingprice', 'price', 'mrp', 'saleprice'],
         'wholesale_price': ['wholesaleprice', 'wholesale'],
@@ -1179,6 +1204,7 @@ def import_products_from_excel(file_path: str) -> ImportReport:
                 payload = {
                     'product_name': product_name,
                     'category': str(row[idx['category']]).strip() if idx['category'] is not None and row[idx['category']] is not None else 'General',
+                    'supplier': str(row[idx['supplier']]).strip() if idx['supplier'] is not None and row[idx['supplier']] is not None else '',
                     'purchase_price': float(row[idx['purchase_price']]) if idx['purchase_price'] is not None and row[idx['purchase_price']] not in (None, '') else 0,
                     'selling_price': float(row[idx['selling_price']]) if idx['selling_price'] is not None and row[idx['selling_price']] not in (None, '') else 0,
                     'wholesale_price': float(row[idx['wholesale_price']]) if idx['wholesale_price'] is not None and row[idx['wholesale_price']] not in (None, '') else 0,
@@ -1209,7 +1235,7 @@ def import_products_from_excel(file_path: str) -> ImportReport:
                         UPDATE products
                         SET product_name = ?, category = ?, price = ?, description = ?, image = ?,
                             purchase_price = ?, selling_price = ?, wholesale_price = ?,
-                            barcode = ?, gst = ?, hsn = ?, stock = ?, min_stock = ?, status = ?, updated_at = ?
+                            barcode = ?, gst = ?, hsn = ?, stock = ?, min_stock = ?, status = ?, supplier = ?, updated_at = ?
                         WHERE id = ?
                         ''',
                         (
@@ -1227,6 +1253,7 @@ def import_products_from_excel(file_path: str) -> ImportReport:
                             data['stock'],
                             data['min_stock'],
                             data['status'],
+                            data['supplier'],
                             datetime.now().isoformat(timespec='seconds'),
                             existing['id'],
                         ),
@@ -1240,9 +1267,9 @@ def import_products_from_excel(file_path: str) -> ImportReport:
                         INSERT INTO products (
                             product_name, category, price, description, image,
                             purchase_price, selling_price, wholesale_price,
-                            barcode, gst, hsn, stock, min_stock, status,
+                            barcode, gst, hsn, stock, min_stock, status, supplier,
                             created_at, updated_at
-                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                         ''',
                         (
                             data['product_name'],
@@ -1259,6 +1286,7 @@ def import_products_from_excel(file_path: str) -> ImportReport:
                             data['stock'],
                             data['min_stock'],
                             data['status'],
+                            data['supplier'],
                             now,
                             now,
                         ),
@@ -1280,6 +1308,7 @@ def _product_export_dict(product: Dict) -> Dict:
     return {
         'Product Name': product.get('product_name', ''),
         'Category': product.get('category', ''),
+        'Supplier': product.get('supplier', ''),
         'Purchase Price': product.get('purchase_price', 0),
         'Selling Price': product.get('selling_price', product.get('price', 0)),
         'Wholesale Price': product.get('wholesale_price', 0),
@@ -1302,6 +1331,7 @@ def generate_product_import_sample(file_path: str):
     headers = [
         'Product Name',
         'Category',
+        'Supplier',
         'Purchase Price',
         'Selling Price',
         'Wholesale Price',
@@ -1317,6 +1347,7 @@ def generate_product_import_sample(file_path: str):
     sample_row = [
         'Sample Product',
         'General',
+        'Patel Distributors',
         120.0,
         150.0,
         130.0,
@@ -1356,8 +1387,139 @@ def update_products_status(product_ids: List[int], status: str):
     generate_catalog_json()
 
 
-def export_products_excel(file_path: str):
+def list_suppliers(search: str = '') -> List[str]:
+    connection = get_connection()
+    try:
+        query = "SELECT DISTINCT supplier FROM products WHERE TRIM(COALESCE(supplier, '')) <> ''"
+        params: List = []
+        if search:
+            query += ' AND supplier LIKE ?'
+            params.append(f'%{search.strip()}%')
+        query += ' ORDER BY supplier COLLATE NOCASE ASC'
+        rows = connection.execute(query, params).fetchall()
+        return [str(row['supplier']).strip() for row in rows if str(row['supplier']).strip()]
+    finally:
+        connection.close()
+
+
+def bulk_update_products(product_ids: List[int], updates: Dict):
+    ids = [int(pid) for pid in product_ids if int(pid) > 0]
+    if not ids:
+        return
+
+    allowed_fields = {
+        'category',
+        'supplier',
+        'purchase_price',
+        'selling_price',
+        'wholesale_price',
+        'gst',
+        'stock',
+        'min_stock',
+        'image',
+        'status',
+    }
+    sanitized: Dict = {}
+    for key, value in (updates or {}).items():
+        if key not in allowed_fields:
+            continue
+        if key in {'purchase_price', 'selling_price', 'wholesale_price', 'gst', 'stock', 'min_stock'}:
+            sanitized[key] = _safe_float(value, 0)
+        elif key == 'status':
+            sanitized[key] = 'Inactive' if str(value).strip().lower() == 'inactive' else 'Active'
+        elif key == 'category':
+            sanitized[key] = (value or 'General').strip() or 'General'
+        elif key == 'supplier':
+            sanitized[key] = (value or '').strip()
+        elif key == 'image':
+            sanitized[key] = normalize_image_value(value)
+        else:
+            sanitized[key] = value
+
+    if not sanitized:
+        return
+
+    if 'category' in sanitized:
+        ensure_category(sanitized['category'])
+
+    connection = get_connection()
+    try:
+        placeholders = ','.join(['?'] * len(ids))
+        set_parts = [f"{field} = ?" for field in sanitized.keys()]
+        params: List = list(sanitized.values())
+        params.append(datetime.now().isoformat(timespec='seconds'))
+        set_parts.append('updated_at = ?')
+        params.extend(ids)
+        connection.execute(
+            f"UPDATE products SET {', '.join(set_parts)} WHERE id IN ({placeholders})",
+            params,
+        )
+        connection.commit()
+    finally:
+        connection.close()
+
+    generate_catalog_json()
+
+
+def bulk_delete_products(product_ids: List[int]):
+    ids = [int(pid) for pid in product_ids if int(pid) > 0]
+    if not ids:
+        return
+    connection = get_connection()
+    try:
+        placeholders = ','.join(['?'] * len(ids))
+        rows = connection.execute(
+            f'SELECT image FROM products WHERE id IN ({placeholders})',
+            ids,
+        ).fetchall()
+        connection.execute(f'DELETE FROM products WHERE id IN ({placeholders})', ids)
+        for row in rows:
+            _delete_image_if_unused(connection, row['image'])
+        connection.commit()
+    finally:
+        connection.close()
+
+    generate_catalog_json()
+
+
+def get_product_statistics() -> Dict:
+    connection = get_connection()
+    try:
+        row = connection.execute(
+            '''
+            SELECT
+                COUNT(*) AS total,
+                SUM(CASE WHEN COALESCE(status, 'Active') = 'Active' THEN 1 ELSE 0 END) AS active,
+                SUM(CASE WHEN COALESCE(status, 'Active') = 'Inactive' THEN 1 ELSE 0 END) AS inactive,
+                SUM(CASE WHEN COALESCE(stock, 0) <= 0 THEN 1 ELSE 0 END) AS out_of_stock,
+                SUM(CASE WHEN COALESCE(stock, 0) > 0 AND COALESCE(stock, 0) <= COALESCE(min_stock, 0) THEN 1 ELSE 0 END) AS low_stock,
+                SUM(COALESCE(stock, 0) * COALESCE(purchase_price, 0)) AS inventory_value,
+                AVG(CASE
+                    WHEN COALESCE(selling_price, 0) > 0
+                    THEN ((COALESCE(selling_price, 0) - COALESCE(purchase_price, 0)) / COALESCE(selling_price, 0)) * 100
+                    ELSE 0
+                END) AS avg_margin
+            FROM products
+            '''
+        ).fetchone()
+        return {
+            'total': int(row['total'] or 0),
+            'active': int(row['active'] or 0),
+            'inactive': int(row['inactive'] or 0),
+            'out_of_stock': int(row['out_of_stock'] or 0),
+            'low_stock': int(row['low_stock'] or 0),
+            'inventory_value': float(row['inventory_value'] or 0),
+            'avg_margin': float(row['avg_margin'] or 0),
+        }
+    finally:
+        connection.close()
+
+
+def export_products_excel(file_path: str, product_ids: Optional[List[int]] = None):
     products = list_products()
+    if product_ids:
+        ids = {int(pid) for pid in product_ids}
+        products = [product for product in products if int(product.get('id', 0)) in ids]
     wb = Workbook()
     ws = wb.active
     ws.title = 'Products'
@@ -1371,8 +1533,11 @@ def export_products_excel(file_path: str):
     wb.save(file_path)
 
 
-def export_products_csv(file_path: str):
+def export_products_csv(file_path: str, product_ids: Optional[List[int]] = None):
     products = list_products()
+    if product_ids:
+        ids = {int(pid) for pid in product_ids}
+        products = [product for product in products if int(product.get('id', 0)) in ids]
     headers = list(_product_export_dict({}).keys())
     with open(file_path, 'w', newline='', encoding='utf-8') as handle:
         writer = csv.DictWriter(handle, fieldnames=headers)
@@ -1381,8 +1546,11 @@ def export_products_csv(file_path: str):
             writer.writerow(_product_export_dict(product))
 
 
-def export_products_json(file_path: str):
+def export_products_json(file_path: str, product_ids: Optional[List[int]] = None):
     products = list_products()
+    if product_ids:
+        ids = {int(pid) for pid in product_ids}
+        products = [product for product in products if int(product.get('id', 0)) in ids]
     payload = [_product_export_dict(product) for product in products]
     with open(file_path, 'w', encoding='utf-8') as handle:
         json.dump(payload, handle, indent=2)

@@ -40,6 +40,8 @@ sys.path.insert(0, str(ROOT))
 
 from admin.database.db import init_db
 from admin.services.catalog import (
+    bulk_delete_products,
+    bulk_update_products,
     create_category,
     create_retailer,
     create_product,
@@ -54,6 +56,7 @@ from admin.services.catalog import (
     export_products_excel,
     export_products_json,
     generate_product_import_sample,
+    get_product_statistics,
     get_order,
     get_retailer,
     get_settings,
@@ -63,6 +66,7 @@ from admin.services.catalog import (
     list_orders,
     list_retailers,
     list_categories,
+    list_suppliers,
     list_products,
     publish_changes,
     rename_category,
@@ -121,6 +125,7 @@ class ProductDialog(QtWidgets.QDialog):
         self._input_widgets = [
             self.product_name,
             self.category,
+            self.supplier,
             self.purchase_price,
             self.selling_price,
             self.wholesale_price,
@@ -161,6 +166,8 @@ class ProductDialog(QtWidgets.QDialog):
         self.product_name = QtWidgets.QLineEdit()
         self.category = QtWidgets.QComboBox()
         self.category.setEditable(True)
+        self.supplier = QtWidgets.QComboBox()
+        self.supplier.setEditable(True)
         self.add_category_btn = QtWidgets.QPushButton('Add Category')
         self.add_category_btn.clicked.connect(self._add_category_inline)
 
@@ -209,6 +216,10 @@ class ProductDialog(QtWidgets.QDialog):
         category_widget = QtWidgets.QWidget()
         category_widget.setLayout(category_wrap)
         form.addWidget(category_widget, row, 3)
+
+        row += 1
+        form.addWidget(QtWidgets.QLabel('Supplier'), row, 0)
+        form.addWidget(self.supplier, row, 1)
 
         row += 1
         form.addWidget(QtWidgets.QLabel('Purchase Price'), row, 0)
@@ -278,6 +289,13 @@ class ProductDialog(QtWidgets.QDialog):
         if current:
             self.category.setCurrentText(current)
 
+        supplier_current = self.supplier.currentText()
+        self.supplier.clear()
+        for name in list_suppliers():
+            self.supplier.addItem(name)
+        if supplier_current:
+            self.supplier.setCurrentText(supplier_current)
+
     def _add_category_inline(self):
         name = self.category.currentText().strip()
         if not name:
@@ -289,6 +307,7 @@ class ProductDialog(QtWidgets.QDialog):
     def _fill_form(self):
         self.product_name.setText(self.product.get('product_name', ''))
         self.category.setCurrentText(self.product.get('category', 'General'))
+        self.supplier.setCurrentText(self.product.get('supplier', ''))
         self.purchase_price.setValue(float(self.product.get('purchase_price', 0) or 0))
         self.selling_price.setValue(float(self.product.get('selling_price', self.product.get('price', 0)) or 0))
         self.wholesale_price.setValue(float(self.product.get('wholesale_price', 0) or 0))
@@ -342,6 +361,7 @@ class ProductDialog(QtWidgets.QDialog):
         return {
             'product_name': self.product_name.text().strip(),
             'category': self.category.currentText().strip(),
+            'supplier': self.supplier.currentText().strip(),
             'purchase_price': self.purchase_price.value(),
             'selling_price': self.selling_price.value(),
             'wholesale_price': self.wholesale_price.value(),
@@ -1334,23 +1354,31 @@ class AdminWindow(QtWidgets.QMainWindow):
         self.current_theme = self.settings.get('theme', 'dark')
         self._restoring_layout = False
         self._frozen_columns = {1, 2}
+        self._quick_filter = 'all'
+        self._suspend_check_sync = False
+        self._stat_labels = {}
         self._build_ui()
         self._build_shortcuts()
         self._apply_theme(self.current_theme)
         self.refresh_products()
 
     def _build_ui(self):
-        self.setWindowTitle('Patel Stores Admin Panel - Mini ERP')
-        self.resize(1500, 860)
+        self.setWindowTitle('Patel Stores Admin Panel - Product ERP')
+        self.resize(1620, 920)
 
         central = QtWidgets.QWidget()
         self.setCentralWidget(central)
         root = QtWidgets.QVBoxLayout(central)
+        root.setContentsMargins(14, 12, 14, 12)
+        root.setSpacing(10)
 
         top = QtWidgets.QHBoxLayout()
-        title = QtWidgets.QLabel('Patel Stores Admin Panel')
-        title.setStyleSheet('font-size: 22px; font-weight: 700;')
+        title = QtWidgets.QLabel('Product Management ERP')
+        title.setStyleSheet('font-size: 23px; font-weight: 800; letter-spacing: 0.4px;')
         top.addWidget(title)
+        subtitle = QtWidgets.QLabel('Fast inventory control, bulk actions, and publication-ready catalog sync')
+        subtitle.setStyleSheet('font-size: 12px; color: #64748b;')
+        top.addWidget(subtitle)
         top.addStretch()
 
         self.theme_btn = QtWidgets.QPushButton('Toggle Theme')
@@ -1368,6 +1396,7 @@ class AdminWindow(QtWidgets.QMainWindow):
         root.addLayout(top)
 
         actions = QtWidgets.QHBoxLayout()
+        actions.setSpacing(8)
         self.add_btn = QtWidgets.QPushButton('Add Product')
         self.edit_btn = QtWidgets.QPushButton('Edit Product')
         self.dup_btn = QtWidgets.QPushButton('Duplicate Product')
@@ -1390,11 +1419,110 @@ class AdminWindow(QtWidgets.QMainWindow):
         self.retailers_btn.clicked.connect(self.manage_retailers)
         self.orders_btn.clicked.connect(self.manage_orders)
 
-        for btn in [self.add_btn, self.edit_btn, self.dup_btn, self.del_btn, self.refresh_btn, self.import_btn, self.export_btn, self.categories_btn, self.retailers_btn, self.orders_btn]:
+        for btn in [
+            self.add_btn,
+            self.edit_btn,
+            self.dup_btn,
+            self.del_btn,
+            self.import_btn,
+            self.export_btn,
+            self.refresh_btn,
+            self.categories_btn,
+            self.retailers_btn,
+            self.orders_btn,
+        ]:
             actions.addWidget(btn)
 
         actions.addStretch()
+
+        self.bulk_activate_btn = QtWidgets.QPushButton('Bulk Activate')
+        self.bulk_deactivate_btn = QtWidgets.QPushButton('Bulk Deactivate')
+        self.bulk_category_btn = QtWidgets.QPushButton('Bulk Category')
+        self.bulk_supplier_btn = QtWidgets.QPushButton('Bulk Supplier')
+        self.bulk_price_btn = QtWidgets.QPushButton('Bulk Prices')
+        self.bulk_stock_btn = QtWidgets.QPushButton('Bulk Stock')
+        self.bulk_gst_btn = QtWidgets.QPushButton('Bulk GST')
+        self.bulk_image_btn = QtWidgets.QPushButton('Bulk Image')
+        self.bulk_export_btn = QtWidgets.QPushButton('Export Selected')
+        self.bulk_delete_btn = QtWidgets.QPushButton('Delete Selected')
+
+        self.bulk_activate_btn.clicked.connect(lambda: self._set_selected_products_status('Active', bulk=True))
+        self.bulk_deactivate_btn.clicked.connect(lambda: self._set_selected_products_status('Inactive', bulk=True))
+        self.bulk_category_btn.clicked.connect(self.bulk_update_category)
+        self.bulk_supplier_btn.clicked.connect(self.bulk_update_supplier)
+        self.bulk_price_btn.clicked.connect(self.bulk_update_prices)
+        self.bulk_stock_btn.clicked.connect(self.bulk_update_stock)
+        self.bulk_gst_btn.clicked.connect(self.bulk_update_gst)
+        self.bulk_image_btn.clicked.connect(self.bulk_update_image)
+        self.bulk_export_btn.clicked.connect(self.export_selected_products)
+        self.bulk_delete_btn.clicked.connect(self.bulk_delete_selected_products)
+
+        for btn in [
+            self.bulk_activate_btn,
+            self.bulk_deactivate_btn,
+            self.bulk_category_btn,
+            self.bulk_supplier_btn,
+            self.bulk_price_btn,
+            self.bulk_stock_btn,
+            self.bulk_gst_btn,
+            self.bulk_image_btn,
+            self.bulk_export_btn,
+            self.bulk_delete_btn,
+        ]:
+            actions.addWidget(btn)
+
         root.addLayout(actions)
+
+        quick_filters = QtWidgets.QHBoxLayout()
+        quick_filters.setSpacing(6)
+        quick_filters.addWidget(QtWidgets.QLabel('Quick Filters:'))
+        self.quick_filter_buttons = {}
+        for key, label in [
+            ('all', 'All'),
+            ('active', 'Active'),
+            ('inactive', 'Inactive'),
+            ('out', 'Out Of Stock'),
+            ('low', 'Low Stock'),
+            ('high', 'High Value'),
+        ]:
+            btn = QtWidgets.QPushButton(label)
+            btn.setCheckable(True)
+            btn.clicked.connect(partial(self._set_quick_filter, key))
+            self.quick_filter_buttons[key] = btn
+            quick_filters.addWidget(btn)
+        quick_filters.addStretch()
+        self.selected_count_label = QtWidgets.QLabel('0 Products Selected')
+        self.selected_count_label.setStyleSheet('font-weight: 600;')
+        quick_filters.addWidget(self.selected_count_label)
+        root.addLayout(quick_filters)
+
+        self.stats_strip = QtWidgets.QFrame()
+        self.stats_strip.setObjectName('statsStrip')
+        stats_layout = QtWidgets.QHBoxLayout(self.stats_strip)
+        stats_layout.setContentsMargins(10, 10, 10, 10)
+        stats_layout.setSpacing(8)
+        for key, title_text in [
+            ('total', 'Total'),
+            ('active', 'Active'),
+            ('inactive', 'Inactive'),
+            ('out_of_stock', 'Out Of Stock'),
+            ('low_stock', 'Low Stock'),
+            ('inventory_value', 'Inventory Value'),
+            ('avg_margin', 'Avg Margin'),
+        ]:
+            card = QtWidgets.QFrame()
+            card.setObjectName('statCard')
+            card_layout = QtWidgets.QVBoxLayout(card)
+            card_layout.setContentsMargins(10, 8, 10, 8)
+            title_lbl = QtWidgets.QLabel(title_text)
+            title_lbl.setObjectName('statTitle')
+            value_lbl = QtWidgets.QLabel('0')
+            value_lbl.setObjectName('statValue')
+            card_layout.addWidget(title_lbl)
+            card_layout.addWidget(value_lbl)
+            self._stat_labels[key] = value_lbl
+            stats_layout.addWidget(card)
+        root.addWidget(self.stats_strip)
 
         filters = QtWidgets.QHBoxLayout()
         self.search = QtWidgets.QLineEdit()
@@ -1403,6 +1531,18 @@ class AdminWindow(QtWidgets.QMainWindow):
 
         self.category_filter = QtWidgets.QComboBox()
         self.category_filter.currentIndexChanged.connect(self.refresh_products)
+
+        self.supplier_filter = QtWidgets.QComboBox()
+        self.supplier_filter.setEditable(True)
+        self.supplier_filter.currentIndexChanged.connect(self.refresh_products)
+
+        self.gst_filter = QtWidgets.QComboBox()
+        self.gst_filter.addItems(['All GST', '0', '5', '12', '18', '28'])
+        self.gst_filter.currentIndexChanged.connect(self.refresh_products)
+
+        self.barcode_filter = QtWidgets.QLineEdit()
+        self.barcode_filter.setPlaceholderText('Barcode contains...')
+        self.barcode_filter.textChanged.connect(self.refresh_products)
 
         self.min_price_filter = QtWidgets.QDoubleSpinBox()
         self.min_price_filter.setPrefix('Min Price ')
@@ -1417,6 +1557,19 @@ class AdminWindow(QtWidgets.QMainWindow):
         self.max_price_filter.setValue(0)
         self.max_price_filter.valueChanged.connect(self.refresh_products)
 
+        self.min_stock_filter = QtWidgets.QDoubleSpinBox()
+        self.min_stock_filter.setPrefix('Min Stock ')
+        self.min_stock_filter.setRange(0, 9999999)
+        self.min_stock_filter.setDecimals(2)
+        self.min_stock_filter.valueChanged.connect(self.refresh_products)
+
+        self.max_stock_filter = QtWidgets.QDoubleSpinBox()
+        self.max_stock_filter.setPrefix('Max Stock ')
+        self.max_stock_filter.setRange(0, 9999999)
+        self.max_stock_filter.setDecimals(2)
+        self.max_stock_filter.setValue(0)
+        self.max_stock_filter.valueChanged.connect(self.refresh_products)
+
         self.stock_filter = QtWidgets.QComboBox()
         self.stock_filter.addItems(['All Stock', 'In Stock', 'Out of Stock', 'Low Stock'])
         self.stock_filter.currentIndexChanged.connect(self.refresh_products)
@@ -1427,19 +1580,25 @@ class AdminWindow(QtWidgets.QMainWindow):
 
         filters.addWidget(self.search, 3)
         filters.addWidget(self.category_filter, 1)
+        filters.addWidget(self.supplier_filter, 1)
+        filters.addWidget(self.gst_filter, 1)
+        filters.addWidget(self.barcode_filter, 1)
         filters.addWidget(self.min_price_filter, 1)
         filters.addWidget(self.max_price_filter, 1)
+        filters.addWidget(self.min_stock_filter, 1)
+        filters.addWidget(self.max_stock_filter, 1)
         filters.addWidget(self.stock_filter, 1)
         filters.addWidget(self.status_filter, 1)
         root.addLayout(filters)
 
-        self.table = QtWidgets.QTableWidget(0, 16)
+        self.table = QtWidgets.QTableWidget(0, 17)
         self.table.setHorizontalHeaderLabels(
             [
                 'Sel',
                 'Photo',
                 'Product Name',
                 'Category',
+            'Supplier',
                 'Status',
                 'Purchase Price',
                 'Selling Price',
@@ -1468,12 +1627,14 @@ class AdminWindow(QtWidgets.QMainWindow):
         self.table.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Interactive)
         self.table.horizontalHeader().sectionMoved.connect(self._on_header_section_moved)
         self.table.horizontalHeader().sectionResized.connect(self._persist_table_layout)
+        self.table.horizontalHeader().sectionClicked.connect(self._on_header_clicked)
         self.table.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         self.table.customContextMenuRequested.connect(self.show_context_menu)
         self.table.itemDoubleClicked.connect(lambda _: self.edit_selected_product())
         self.table.itemChanged.connect(self._on_row_check_changed)
+        self.table.itemSelectionChanged.connect(self._sync_selection_to_checks)
         root.addWidget(self.table)
-        self.table.setColumnHidden(15, True)
+        self.table.setColumnHidden(16, True)
 
         self._restore_table_layout()
 
@@ -1484,6 +1645,7 @@ class AdminWindow(QtWidgets.QMainWindow):
         self.progress.setRange(0, 100)
         self.progress.setVisible(False)
         root.addWidget(self.progress)
+        self._set_quick_filter('all')
 
     def _build_shortcuts(self):
         QtGui.QShortcut(QtGui.QKeySequence('Ctrl+N'), self, self.add_product)
@@ -1494,7 +1656,11 @@ class AdminWindow(QtWidgets.QMainWindow):
         QtGui.QShortcut(QtGui.QKeySequence('Ctrl+S'), self, self.publish)
         QtGui.QShortcut(QtGui.QKeySequence('Ctrl+R'), self, self.refresh_products)
         QtGui.QShortcut(QtGui.QKeySequence('Ctrl+F'), self, self.focus_search)
-        QtGui.QShortcut(QtGui.QKeySequence('Ctrl+A'), self, self.table.selectAll)
+        QtGui.QShortcut(QtGui.QKeySequence('Ctrl+A'), self, self.select_all_products)
+        QtGui.QShortcut(QtGui.QKeySequence('Ctrl+Shift+A'), self, lambda: self._set_selected_products_status('Active', bulk=True))
+        QtGui.QShortcut(QtGui.QKeySequence('Ctrl+Shift+X'), self, lambda: self._set_selected_products_status('Inactive', bulk=True))
+        QtGui.QShortcut(QtGui.QKeySequence('Ctrl+Shift+E'), self, self.export_selected_products)
+        QtGui.QShortcut(QtGui.QKeySequence('Ctrl+Shift+D'), self, self.bulk_delete_selected_products)
         QtGui.QShortcut(QtGui.QKeySequence('Space'), self, self.toggle_selected_product_status)
         QtGui.QShortcut(QtGui.QKeySequence('Delete'), self, self.delete_selected_product)
         QtGui.QShortcut(QtGui.QKeySequence('F5'), self, self.refresh_products)
@@ -1556,8 +1722,58 @@ class AdminWindow(QtWidgets.QMainWindow):
             return
         self._persist_table_layout()
 
+    def _on_header_clicked(self, logical_index: int):
+        if logical_index != 0:
+            return
+        all_checked = self._all_rows_checked()
+        self._set_all_row_checks(not all_checked)
+
+    def _all_rows_checked(self) -> bool:
+        if self.table.rowCount() == 0:
+            return False
+        for row in range(self.table.rowCount()):
+            item = self.table.item(row, 0)
+            if not item or item.checkState() != QtCore.Qt.Checked:
+                return False
+        return True
+
+    def _set_all_row_checks(self, checked: bool):
+        self._suspend_check_sync = True
+        self.table.blockSignals(True)
+        try:
+            for row in range(self.table.rowCount()):
+                item = self.table.item(row, 0)
+                if item:
+                    item.setCheckState(QtCore.Qt.Checked if checked else QtCore.Qt.Unchecked)
+                    model_index = self.table.model().index(row, 0)
+                    mode = QtCore.QItemSelectionModel.Select | QtCore.QItemSelectionModel.Rows
+                    if not checked:
+                        mode = QtCore.QItemSelectionModel.Deselect | QtCore.QItemSelectionModel.Rows
+                    self.table.selectionModel().select(model_index, mode)
+        finally:
+            self.table.blockSignals(False)
+            self._suspend_check_sync = False
+        self._update_selected_count()
+
+    def _sync_selection_to_checks(self):
+        if self._suspend_check_sync:
+            return
+        self._suspend_check_sync = True
+        self.table.blockSignals(True)
+        try:
+            selected_rows = {index.row() for index in self.table.selectionModel().selectedRows()}
+            for row in range(self.table.rowCount()):
+                item = self.table.item(row, 0)
+                if not item:
+                    continue
+                item.setCheckState(QtCore.Qt.Checked if row in selected_rows else QtCore.Qt.Unchecked)
+        finally:
+            self.table.blockSignals(False)
+            self._suspend_check_sync = False
+        self._update_selected_count()
+
     def _on_row_check_changed(self, item):
-        if item.column() != 0:
+        if item.column() != 0 or self._suspend_check_sync:
             return
         checked = item.checkState() == QtCore.Qt.Checked
         row = item.row()
@@ -1566,6 +1782,7 @@ class AdminWindow(QtWidgets.QMainWindow):
             model.select(self.table.model().index(row, 0), QtCore.QItemSelectionModel.Select | QtCore.QItemSelectionModel.Rows)
         else:
             model.select(self.table.model().index(row, 0), QtCore.QItemSelectionModel.Deselect | QtCore.QItemSelectionModel.Rows)
+        self._update_selected_count()
 
     def _apply_theme(self, theme: str):
         if theme == 'light':
@@ -1580,23 +1797,34 @@ class AdminWindow(QtWidgets.QMainWindow):
                     selection-color: #0f172a;
                     gridline-color: #e2e8f0;
                 }
-                QPushButton { background: #2563eb; color: #ffffff; border-radius: 10px; padding: 8px 12px; }
+                QFrame#statsStrip { background: #e2e8f0; border-radius: 12px; }
+                QFrame#statCard { background: #ffffff; border: 1px solid #cbd5e1; border-radius: 10px; }
+                QLabel#statTitle { color: #64748b; font-size: 11px; }
+                QLabel#statValue { color: #0f172a; font-size: 18px; font-weight: 700; }
+                QPushButton { background: #2563eb; color: #ffffff; border-radius: 10px; padding: 8px 12px; border: 1px solid #1d4ed8; }
                 QPushButton:hover { background: #1d4ed8; }
             ''')
         else:
             self.setStyleSheet('''
-                QWidget { background: #0f172a; color: #e2e8f0; }
+                QWidget { background: #0a1220; color: #dbe7ff; }
                 QLineEdit, QPlainTextEdit, QComboBox, QDoubleSpinBox, QTableWidget {
-                    background: #111827; border: 1px solid #334155; border-radius: 8px; padding: 4px;
+                    background: #0f1d33; border: 1px solid #2f4364; border-radius: 8px; padding: 4px;
                 }
                 QTableWidget {
-                    alternate-background-color: #1f2937;
-                    selection-background-color: #1e3a8a;
-                    selection-color: #e2e8f0;
-                    gridline-color: #334155;
+                    alternate-background-color: #101e34;
+                    selection-background-color: #1d4ed8;
+                    selection-color: #f8fafc;
+                    gridline-color: #2f4364;
                 }
-                QPushButton { background: #334155; color: #e2e8f0; border-radius: 10px; padding: 8px 12px; }
-                QPushButton:hover { background: #475569; }
+                QHeaderView::section { background: #12213a; color: #b8cff9; border: 1px solid #2f4364; padding: 5px; }
+                QFrame#statsStrip { background: #0b1730; border: 1px solid #243a5c; border-radius: 12px; }
+                QFrame#statCard { background: #0f1d33; border: 1px solid #2f4364; border-radius: 10px; }
+                QLabel#statTitle { color: #7ea4dd; font-size: 11px; }
+                QLabel#statValue { color: #eff6ff; font-size: 18px; font-weight: 700; }
+                QPushButton { background: #14315a; color: #e6efff; border-radius: 10px; padding: 8px 12px; border: 1px solid #2f4a73; }
+                QPushButton:hover { background: #1f467e; }
+                QPushButton:pressed { background: #0f2b52; }
+                QPushButton:checked { background: #1d4ed8; border-color: #3b82f6; }
             ''')
 
     def toggle_theme(self):
@@ -1612,7 +1840,7 @@ class AdminWindow(QtWidgets.QMainWindow):
         row = self.table.currentRow()
         if row < 0:
             return None
-        id_item = self.table.item(row, 15)
+        id_item = self.table.item(row, 16)
         if not id_item:
             return None
         return int(id_item.text())
@@ -1621,10 +1849,24 @@ class AdminWindow(QtWidgets.QMainWindow):
         rows = {index.row() for index in self.table.selectionModel().selectedRows()}
         ids = []
         for row in rows:
-            item = self.table.item(row, 15)
+            item = self.table.item(row, 16)
             if item and item.text().strip():
                 ids.append(int(item.text()))
         return ids
+
+    def _set_quick_filter(self, key: str):
+        self._quick_filter = key
+        for value, btn in self.quick_filter_buttons.items():
+            btn.setChecked(value == key)
+        self.refresh_products()
+
+    def select_all_products(self):
+        self.table.selectAll()
+        self._set_all_row_checks(True)
+
+    def _update_selected_count(self):
+        selected = len(self._selected_product_ids())
+        self.selected_count_label.setText(f'{selected} Products Selected')
 
     def _populate_category_filter(self):
         current = self.category_filter.currentText()
@@ -1639,8 +1881,43 @@ class AdminWindow(QtWidgets.QMainWindow):
                 self.category_filter.setCurrentIndex(index)
         self.category_filter.blockSignals(False)
 
+    def _populate_supplier_filter(self):
+        current = self.supplier_filter.currentText()
+        self.supplier_filter.blockSignals(True)
+        self.supplier_filter.clear()
+        self.supplier_filter.addItem('All')
+        for name in list_suppliers():
+            self.supplier_filter.addItem(name)
+        if current:
+            index = self.supplier_filter.findText(current)
+            if index >= 0:
+                self.supplier_filter.setCurrentIndex(index)
+            else:
+                self.supplier_filter.setCurrentText(current)
+        self.supplier_filter.blockSignals(False)
+
+    def _parse_optional_float(self, value: str):
+        text = (value or '').strip()
+        if not text:
+            return None
+        try:
+            return float(text)
+        except ValueError:
+            return None
+
+    def _update_stats(self):
+        stats = get_product_statistics()
+        self._stat_labels['total'].setText(str(stats.get('total', 0)))
+        self._stat_labels['active'].setText(str(stats.get('active', 0)))
+        self._stat_labels['inactive'].setText(str(stats.get('inactive', 0)))
+        self._stat_labels['out_of_stock'].setText(str(stats.get('out_of_stock', 0)))
+        self._stat_labels['low_stock'].setText(str(stats.get('low_stock', 0)))
+        self._stat_labels['inventory_value'].setText(f"{float(stats.get('inventory_value', 0) or 0):.2f}")
+        self._stat_labels['avg_margin'].setText(f"{float(stats.get('avg_margin', 0) or 0):.2f}%")
+
     def refresh_products(self):
         self._populate_category_filter()
+        self._populate_supplier_filter()
         stock_mode_map = {
             'All Stock': 'all',
             'In Stock': 'in',
@@ -1652,15 +1929,44 @@ class AdminWindow(QtWidgets.QMainWindow):
         category = self.category_filter.currentText()
         if category == 'All':
             category = ''
+        supplier = self.supplier_filter.currentText().strip()
+        if supplier == 'All':
+            supplier = ''
+
+        status_value = self.status_filter.currentText().replace(' Status', '').lower()
+        if self._quick_filter == 'active':
+            status_value = 'active'
+        elif self._quick_filter == 'inactive':
+            status_value = 'inactive'
+        elif self._quick_filter in {'out', 'low'}:
+            stock_mode = self._quick_filter
+
+        min_price = self.min_price_filter.value() if self.min_price_filter.value() > 0 else None
+        max_price = self.max_price_filter.value() if self.max_price_filter.value() > 0 else None
+        min_stock = self.min_stock_filter.value() if self.min_stock_filter.value() > 0 else None
+        max_stock = self.max_stock_filter.value() if self.max_stock_filter.value() > 0 else None
+        gst_text = self.gst_filter.currentText()
+        gst_filter_value = None if gst_text == 'All GST' else self._parse_optional_float(gst_text)
 
         self.products = list_products(
             search=self.search.text().strip(),
             category=category,
-            min_price=self.min_price_filter.value() if self.min_price_filter.value() > 0 else None,
-            max_price=self.max_price_filter.value() if self.max_price_filter.value() > 0 else None,
+            supplier=supplier,
+            min_price=min_price,
+            max_price=max_price,
+            min_stock=min_stock,
+            max_stock=max_stock,
+            gst=gst_filter_value,
+            barcode=self.barcode_filter.text().strip(),
             stock_mode=stock_mode,
-            status=self.status_filter.currentText().replace(' Status', '').lower(),
+            status=status_value,
         )
+
+        if self._quick_filter == 'high':
+            self.products = [
+                p for p in self.products
+                if float(p.get('selling_price', p.get('price', 0)) or 0) >= 1000
+            ]
 
         self.table.setSortingEnabled(False)
         self.table.blockSignals(True)
@@ -1694,6 +2000,7 @@ class AdminWindow(QtWidgets.QMainWindow):
             values = [
                 product.get('product_name', ''),
                 product.get('category', ''),
+                product.get('supplier', ''),
                 product.get('status', 'Active') or 'Active',
                 f"{purchase_price:.2f}",
                 f"{selling_price:.2f}",
@@ -1709,9 +2016,9 @@ class AdminWindow(QtWidgets.QMainWindow):
             ]
             for col, value in enumerate(values, start=2):
                 item = QtWidgets.QTableWidgetItem(value)
-                if col in {5, 6, 7, 8, 10, 12, 13}:
+                if col in {6, 7, 8, 9, 11, 13, 14}:
                     item.setTextAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
-                if col == 4:
+                if col == 5:
                     status_value = (value or 'Active').lower()
                     if status_value == 'active':
                         item.setForeground(QtGui.QColor('#15803d'))
@@ -1728,7 +2035,7 @@ class AdminWindow(QtWidgets.QMainWindow):
                 color = QtGui.QColor(120, 53, 15) if is_dark else QtGui.QColor(254, 243, 199)
             else:
                 color = QtGui.QColor(15, 23, 42) if is_dark else QtGui.QColor(219, 234, 254)
-            for col in range(2, 16):
+            for col in range(2, 17):
                 item = self.table.item(row, col)
                 if item:
                     item.setBackground(color)
@@ -1738,9 +2045,11 @@ class AdminWindow(QtWidgets.QMainWindow):
         self.table.setColumnWidth(0, 40)
         self.table.setColumnWidth(1, 70)
         self.table.setColumnWidth(2, max(200, self.table.columnWidth(2)))
-        self.table.setColumnWidth(14, max(260, self.table.columnWidth(14)))
+        self.table.setColumnWidth(15, max(260, self.table.columnWidth(15)))
         self.table.setSortingEnabled(True)
         self._persist_table_layout()
+        self._update_stats()
+        self._update_selected_count()
         self.status_label.setText(f'{len(self.products)} products loaded')
 
     def _selected_product(self):
@@ -1805,6 +2114,145 @@ class AdminWindow(QtWidgets.QMainWindow):
         except Exception as ex:
             QtWidgets.QMessageBox.warning(self, 'Delete Product', str(ex))
 
+    def _require_selection(self, minimum: int = 1):
+        ids = self._selected_product_ids()
+        if len(ids) < minimum:
+            QtWidgets.QMessageBox.information(self, 'Selection Required', 'Select product rows first.')
+            return []
+        return ids
+
+    def _with_busy_dialog(self, title: str, callback):
+        dialog = QtWidgets.QProgressDialog(title, None, 0, 0, self)
+        dialog.setWindowTitle('Please Wait')
+        dialog.setWindowModality(QtCore.Qt.WindowModal)
+        dialog.setCancelButton(None)
+        dialog.show()
+        QtWidgets.QApplication.processEvents()
+        try:
+            callback()
+        finally:
+            dialog.close()
+
+    def bulk_update_category(self):
+        ids = self._require_selection(2)
+        if not ids:
+            return
+        category, ok = QtWidgets.QInputDialog.getText(self, 'Bulk Category', 'New Category:')
+        if not ok or not category.strip():
+            return
+        try:
+            self._with_busy_dialog('Updating categories...', lambda: bulk_update_products(ids, {'category': category.strip()}))
+            self.refresh_products()
+        except Exception as ex:
+            QtWidgets.QMessageBox.warning(self, 'Bulk Category', str(ex))
+
+    def bulk_update_supplier(self):
+        ids = self._require_selection(2)
+        if not ids:
+            return
+        supplier, ok = QtWidgets.QInputDialog.getText(self, 'Bulk Supplier', 'Supplier Name:')
+        if not ok:
+            return
+        try:
+            self._with_busy_dialog('Updating suppliers...', lambda: bulk_update_products(ids, {'supplier': supplier.strip()}))
+            self.refresh_products()
+        except Exception as ex:
+            QtWidgets.QMessageBox.warning(self, 'Bulk Supplier', str(ex))
+
+    def bulk_update_prices(self):
+        ids = self._require_selection(2)
+        if not ids:
+            return
+        purchase, ok_purchase = QtWidgets.QInputDialog.getDouble(self, 'Bulk Purchase Price', 'Set Purchase Price:', 0, 0, 99999999, 2)
+        if not ok_purchase:
+            return
+        selling, ok_selling = QtWidgets.QInputDialog.getDouble(self, 'Bulk Selling Price', 'Set Selling Price:', 0, 0, 99999999, 2)
+        if not ok_selling:
+            return
+        wholesale, ok_wholesale = QtWidgets.QInputDialog.getDouble(self, 'Bulk Wholesale Price', 'Set Wholesale Price:', 0, 0, 99999999, 2)
+        if not ok_wholesale:
+            return
+        try:
+            self._with_busy_dialog(
+                'Updating prices...',
+                lambda: bulk_update_products(
+                    ids,
+                    {
+                        'purchase_price': purchase,
+                        'selling_price': selling,
+                        'wholesale_price': wholesale,
+                    },
+                ),
+            )
+            self.refresh_products()
+        except Exception as ex:
+            QtWidgets.QMessageBox.warning(self, 'Bulk Prices', str(ex))
+
+    def bulk_update_stock(self):
+        ids = self._require_selection(2)
+        if not ids:
+            return
+        stock, ok_stock = QtWidgets.QInputDialog.getDouble(self, 'Bulk Stock', 'Set Stock:', 0, 0, 99999999, 2)
+        if not ok_stock:
+            return
+        min_stock, ok_min = QtWidgets.QInputDialog.getDouble(self, 'Bulk Minimum Stock', 'Set Minimum Stock:', 0, 0, 99999999, 2)
+        if not ok_min:
+            return
+        try:
+            self._with_busy_dialog('Updating stock...', lambda: bulk_update_products(ids, {'stock': stock, 'min_stock': min_stock}))
+            self.refresh_products()
+        except Exception as ex:
+            QtWidgets.QMessageBox.warning(self, 'Bulk Stock', str(ex))
+
+    def bulk_update_gst(self):
+        ids = self._require_selection(2)
+        if not ids:
+            return
+        gst, ok = QtWidgets.QInputDialog.getDouble(self, 'Bulk GST', 'Set GST (%):', 0, 0, 100, 2)
+        if not ok:
+            return
+        try:
+            self._with_busy_dialog('Updating GST...', lambda: bulk_update_products(ids, {'gst': gst}))
+            self.refresh_products()
+        except Exception as ex:
+            QtWidgets.QMessageBox.warning(self, 'Bulk GST', str(ex))
+
+    def bulk_update_image(self):
+        ids = self._require_selection(2)
+        if not ids:
+            return
+        file_path, _ = QtWidgets.QFileDialog.getOpenFileName(
+            self,
+            'Select Bulk Product Image',
+            str(ROOT / 'images'),
+            'Images (*.png *.jpg *.jpeg *.webp *.bmp)',
+        )
+        if not file_path:
+            return
+        try:
+            self._with_busy_dialog('Updating images...', lambda: bulk_update_products(ids, {'image': file_path}))
+            self.refresh_products()
+        except Exception as ex:
+            QtWidgets.QMessageBox.warning(self, 'Bulk Image', str(ex))
+
+    def bulk_delete_selected_products(self):
+        ids = self._require_selection(2)
+        if not ids:
+            return
+        confirm = QtWidgets.QMessageBox.question(
+            self,
+            'Delete Selected Products',
+            f'Delete {len(ids)} selected products?',
+            QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No,
+        )
+        if confirm != QtWidgets.QMessageBox.Yes:
+            return
+        try:
+            self._with_busy_dialog('Deleting selected products...', lambda: bulk_delete_products(ids))
+            self.refresh_products()
+        except Exception as ex:
+            QtWidgets.QMessageBox.warning(self, 'Bulk Delete', str(ex))
+
     def manage_categories(self):
         dialog = CategoryDialog(self)
         dialog.changed.connect(self.refresh_products)
@@ -1830,8 +2278,18 @@ class AdminWindow(QtWidgets.QMainWindow):
         menu.addSeparator()
         activate_action = menu.addAction('Activate')
         deactivate_action = menu.addAction('Deactivate')
+        menu.addSeparator()
         bulk_activate_action = menu.addAction('Bulk Activate')
         bulk_deactivate_action = menu.addAction('Bulk Deactivate')
+        bulk_category_action = menu.addAction('Bulk Change Category')
+        bulk_supplier_action = menu.addAction('Bulk Change Supplier')
+        bulk_price_action = menu.addAction('Bulk Update Prices')
+        bulk_stock_action = menu.addAction('Bulk Update Stock')
+        bulk_gst_action = menu.addAction('Bulk Update GST')
+        bulk_image_action = menu.addAction('Bulk Update Image')
+        menu.addSeparator()
+        export_selected_action = menu.addAction('Export Selected')
+        bulk_delete_action = menu.addAction('Delete Selected')
         action = menu.exec(self.table.mapToGlobal(point))
 
         if action == edit_action:
@@ -1848,6 +2306,22 @@ class AdminWindow(QtWidgets.QMainWindow):
             self._set_selected_products_status('Active', bulk=True)
         elif action == bulk_deactivate_action:
             self._set_selected_products_status('Inactive', bulk=True)
+        elif action == bulk_category_action:
+            self.bulk_update_category()
+        elif action == bulk_supplier_action:
+            self.bulk_update_supplier()
+        elif action == bulk_price_action:
+            self.bulk_update_prices()
+        elif action == bulk_stock_action:
+            self.bulk_update_stock()
+        elif action == bulk_gst_action:
+            self.bulk_update_gst()
+        elif action == bulk_image_action:
+            self.bulk_update_image()
+        elif action == export_selected_action:
+            self.export_selected_products()
+        elif action == bulk_delete_action:
+            self.bulk_delete_selected_products()
 
     def _set_selected_products_status(self, status: str, bulk: bool = False):
         product_ids = self._selected_product_ids()
@@ -1958,6 +2432,28 @@ class AdminWindow(QtWidgets.QMainWindow):
                     export_products_json(file_path)
                 except Exception as ex:
                     QtWidgets.QMessageBox.warning(self, 'Export JSON', str(ex))
+
+    def export_selected_products(self):
+        ids = self._require_selection(1)
+        if not ids:
+            return
+        menu = QtWidgets.QMenu(self)
+        excel_action = menu.addAction('Export Selected Excel (.xlsx)')
+        csv_action = menu.addAction('Export Selected CSV (.csv)')
+        json_action = menu.addAction('Export Selected JSON (.json)')
+        action = menu.exec(QtGui.QCursor.pos())
+        if action == excel_action:
+            file_path, _ = QtWidgets.QFileDialog.getSaveFileName(self, 'Export Selected Excel', str(ROOT / 'products_selected.xlsx'), 'Excel (*.xlsx)')
+            if file_path:
+                export_products_excel(file_path, ids)
+        elif action == csv_action:
+            file_path, _ = QtWidgets.QFileDialog.getSaveFileName(self, 'Export Selected CSV', str(ROOT / 'products_selected.csv'), 'CSV (*.csv)')
+            if file_path:
+                export_products_csv(file_path, ids)
+        elif action == json_action:
+            file_path, _ = QtWidgets.QFileDialog.getSaveFileName(self, 'Export Selected JSON', str(ROOT / 'products_selected.json'), 'JSON (*.json)')
+            if file_path:
+                export_products_json(file_path, ids)
 
     def open_settings(self):
         dialog = SettingsDialog(self)

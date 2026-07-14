@@ -46,6 +46,7 @@ PRODUCT_COLUMN_DEFS = {
     'stock': 'REAL DEFAULT 0',
     'min_stock': 'REAL DEFAULT 0',
     'status': 'TEXT DEFAULT "Active"',
+    'supplier': 'TEXT DEFAULT ""',
 }
 
 RETAILER_COLUMN_DEFS = {
@@ -119,6 +120,7 @@ def init_db():
                 stock REAL DEFAULT 0,
                 min_stock REAL DEFAULT 0,
                 status TEXT DEFAULT 'Active',
+                supplier TEXT DEFAULT '',
                 created_at TEXT,
                 updated_at TEXT
             );
@@ -201,6 +203,7 @@ def init_db():
         connection.execute('CREATE INDEX IF NOT EXISTS idx_products_category ON products(category)')
         connection.execute('CREATE INDEX IF NOT EXISTS idx_products_barcode ON products(barcode)')
         connection.execute('CREATE INDEX IF NOT EXISTS idx_products_status ON products(status)')
+        connection.execute('CREATE INDEX IF NOT EXISTS idx_products_supplier ON products(supplier)')
         connection.execute(
             'UPDATE products SET selling_price = COALESCE(NULLIF(selling_price, 0), price, 0)'
         )
