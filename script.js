@@ -4,10 +4,12 @@ const LOGIN_KEY = 'patel-stores-auth';
 const USER_KEY = 'patel-stores-user';
 const LOGIN_API = 'https://script.google.com/macros/s/AKfycbzXLQEuY6Vj0Ufs4gOmVJ0YoB4X4bN5XKkkxVjTU4rBP0a0ntrQQp2TLSRAERsqVDw/exec';
 const DB_NAME = 'patel-stores-db';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 const PRODUCTS_STORE = 'products';
 const ORDERS_STORE = 'orders';
+const ORDER_HISTORY_STORE = 'order-history';
 const SYNCED_ORDERS_KEY = 'patel-stores-synced-orders';
+const ORDER_RETENTION_MONTHS = 6;
 
 const state = {
   products: [],
@@ -18,6 +20,9 @@ const state = {
   cart: JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'),
   user: null,
   pendingOrderCount: 0,
+  orderHistory: [],
+  orderSearchTerm: '',
+  selectedHistoryOrderId: null,
   searchFrame: 0,
   modalProductId: null,
   modalImageIndex: 0,
@@ -39,6 +44,10 @@ const state = {
     baseScale: 1,
     pinchDistance: 0
   }
+};
+
+const overlayState = {
+  isHandlingPopState: false
 };
 
 const elements = {
@@ -67,6 +76,7 @@ const elements = {
   closeCart: document.getElementById('close-cart'),
   menuToggle: document.getElementById('menu-toggle'),
   closeMenu: document.getElementById('close-menu'),
+  menuMyOrders: document.getElementById('menu-my-orders'),
   syncStatus: document.getElementById('sync-status'),
   syncPanel: document.getElementById('sync-panel'),
   syncSummary: document.getElementById('sync-summary'),
@@ -75,6 +85,11 @@ const elements = {
   menuDrawer: document.getElementById('menu-drawer'),
   cartDrawer: document.getElementById('cart-drawer'),
   checkoutForm: document.getElementById('checkout-form'),
+  checkoutModal: document.getElementById('checkout-modal'),
+  checkoutModalBackdrop: document.getElementById('checkout-modal-backdrop'),
+  checkoutModalClose: document.getElementById('checkout-modal-close'),
+  checkoutModalForm: document.getElementById('checkout-modal-form'),
+  checkoutModalRemarks: document.getElementById('checkout-modal-remarks'),
   sheetEndpoint: document.getElementById('sheet-endpoint'),
   toast: document.getElementById('toast'),
   productModal: document.getElementById('product-modal'),
@@ -101,13 +116,21 @@ const elements = {
   imageViewerNext: document.getElementById('image-viewer-next'),
   imageViewerImg: document.getElementById('image-viewer-img'),
   imageViewerShell: document.getElementById('image-viewer-shell'),
-  imageViewerThumbs: document.getElementById('image-viewer-thumbs')
+  imageViewerThumbs: document.getElementById('image-viewer-thumbs'),
+  ordersHistory: document.getElementById('orders-history'),
+  ordersHistoryClose: document.getElementById('orders-history-close'),
+  ordersSearch: document.getElementById('orders-search'),
+  ordersList: document.getElementById('orders-list'),
+  ordersEmpty: document.getElementById('orders-empty'),
+  ordersDetail: document.getElementById('orders-detail')
 };
 
 function init() {
+  ensureBaseHistoryState();
   bindEvents();
   registerServiceWorker();
   initSyncSystem();
+  pruneOrderHistory().catch((error) => console.error(error));
 
   const savedUser = localStorage.getItem(USER_KEY);
   if (savedUser) {
@@ -140,19 +163,21 @@ function bindEvents() {
   elements.menuCategoryCards.addEventListener('click', handleCategoryClick);
 
   elements.cartToggle.addEventListener('click', () => toggleCart(true));
-  elements.stickyCheckout.addEventListener('click', () => {
-    toggleCart(true);
-    elements.checkoutForm.scrollIntoView({ behavior: 'smooth', block: 'end' });
-  });
+  elements.stickyCheckout.addEventListener('click', openCheckoutModal);
 
   elements.closeCart.addEventListener('click', () => toggleCart(false));
   elements.menuToggle.addEventListener('click', () => toggleMenu(true));
   elements.closeMenu.addEventListener('click', () => toggleMenu(false));
+  elements.menuMyOrders.addEventListener('click', openOrdersHistory);
   elements.drawerOverlay.addEventListener('click', closeAllDrawers);
 
   document.addEventListener('keydown', handleGlobalKeyDown);
+  window.addEventListener('popstate', handlePopState);
 
   elements.checkoutForm.addEventListener('submit', handleCheckout);
+  elements.checkoutModalForm.addEventListener('submit', handleCheckout);
+  elements.checkoutModalClose.addEventListener('click', closeCheckoutModal);
+  elements.checkoutModalBackdrop.addEventListener('click', closeCheckoutModal);
   elements.syncStatus.addEventListener('click', toggleSyncPanel);
   elements.retrySync.addEventListener('click', () => syncPendingOrders());
 
@@ -183,6 +208,17 @@ function bindEvents() {
   elements.products.addEventListener('touchcancel', handleProductsGridTouchCancel, { passive: true });
 
   elements.cartItems.addEventListener('click', handleCartItemsClick);
+  elements.ordersHistoryClose.addEventListener('click', closeOrdersHistory);
+  elements.ordersSearch.addEventListener('input', (event) => {
+    state.orderSearchTerm = event.target.value.trim().toLowerCase();
+    renderOrderHistory();
+  });
+  elements.ordersList.addEventListener('click', (event) => {
+    const row = event.target.closest('[data-order-id]');
+    if (!row) return;
+    state.selectedHistoryOrderId = row.dataset.orderId;
+    renderOrderHistory();
+  });
 }
 
 let longPressTimer = null;
@@ -266,17 +302,62 @@ function handleCartItemsClick(event) {
   updateCartItem(actionButton.dataset.id, actionButton.dataset.action);
 }
 
-function handleGlobalKeyDown(event) {
-  if (event.key !== 'Escape') return;
-  if (!elements.imageViewer.classList.contains('is-hidden')) {
-    closeImageViewer();
+function ensureBaseHistoryState() {
+  if (!history.state || history.state.psRoot !== true) {
+    history.replaceState({ psRoot: true }, '');
+  }
+}
+
+function pushOverlayState(type) {
+  if (overlayState.isHandlingPopState) return;
+  history.pushState({ psOverlay: type, psTs: Date.now() }, '');
+}
+
+function closeOverlayWithHistory(closeDirectly) {
+  if (!overlayState.isHandlingPopState) {
+    history.back();
     return;
+  }
+  closeDirectly();
+}
+
+function closeTopOverlayForBack() {
+  if (!elements.imageViewer.classList.contains('is-hidden')) {
+    closeImageViewer(true);
+    return true;
   }
   if (!elements.productModal.classList.contains('is-hidden')) {
-    closeProductModal();
-    return;
+    closeProductModal(true);
+    return true;
   }
-  closeAllDrawers();
+  if (elements.menuDrawer.classList.contains('open')) {
+    toggleMenu(false, true);
+    return true;
+  }
+  if (elements.cartDrawer.classList.contains('open')) {
+    toggleCart(false, true);
+    return true;
+  }
+  if (!elements.checkoutModal.classList.contains('is-hidden')) {
+    closeCheckoutModal(true);
+    return true;
+  }
+  if (!elements.ordersHistory.classList.contains('is-hidden')) {
+    closeOrdersHistory(true);
+    return true;
+  }
+  return false;
+}
+
+function handlePopState() {
+  overlayState.isHandlingPopState = true;
+  closeTopOverlayForBack();
+  overlayState.isHandlingPopState = false;
+}
+
+function handleGlobalKeyDown(event) {
+  if (event.key !== 'Escape') return;
+  closeTopOverlayForBack();
 }
 
 function handleCategoryClick(event) {
@@ -459,6 +540,16 @@ function handleLogout() {
   localStorage.removeItem(LOGIN_KEY);
   localStorage.removeItem(USER_KEY);
   state.user = null;
+  closeOrdersHistory(true);
+  closeCheckoutModal(true);
+  closeProductModal(true);
+  closeImageViewer(true);
+  if (elements.menuDrawer.classList.contains('open')) {
+    toggleMenu(false, true);
+  }
+  if (elements.cartDrawer.classList.contains('open')) {
+    toggleCart(false, true);
+  }
   elements.loginForm.reset();
   elements.loginError.textContent = '';
   showLogin();
@@ -692,9 +783,19 @@ function updateCardPrimaryImage(card, product, index) {
   });
 }
 
+function syncBodyModalLock() {
+  const shouldLock =
+    !elements.imageViewer.classList.contains('is-hidden') ||
+    !elements.productModal.classList.contains('is-hidden') ||
+    !elements.checkoutModal.classList.contains('is-hidden') ||
+    !elements.ordersHistory.classList.contains('is-hidden');
+  document.body.classList.toggle('modal-open', shouldLock);
+}
+
 function openProductModal(productId) {
   const product = getProductById(productId);
   if (!product) return;
+  const wasClosed = elements.productModal.classList.contains('is-hidden');
 
   state.modalProductId = productId;
   state.modalImageIndex = 0;
@@ -720,7 +821,10 @@ function openProductModal(productId) {
 
   elements.productModal.classList.remove('is-hidden');
   elements.productModal.setAttribute('aria-hidden', 'false');
-  document.body.classList.add('modal-open');
+  syncBodyModalLock();
+  if (wasClosed) {
+    pushOverlayState('product-modal');
+  }
 }
 
 function renderProductModalGallery(product) {
@@ -769,10 +873,18 @@ function renderProductModalGallery(product) {
   preloadAdjacentImages(product.images, state.modalImageIndex);
 }
 
-function closeProductModal() {
+function closeProductModal(fromPopState = false) {
+  if (elements.productModal.classList.contains('is-hidden')) {
+    return;
+  }
+  if (!fromPopState) {
+    closeOverlayWithHistory(() => closeProductModal(true));
+    return;
+  }
+
   elements.productModal.classList.add('is-hidden');
   elements.productModal.setAttribute('aria-hidden', 'true');
-  document.body.classList.remove('modal-open');
+  syncBodyModalLock();
   state.modalProductId = null;
 }
 
@@ -799,6 +911,7 @@ function addFromProductModal() {
 
 function openImageViewer(images, startIndex = 0) {
   if (!images || !images.length) return;
+  const wasClosed = elements.imageViewer.classList.contains('is-hidden');
 
   state.viewer.open = true;
   state.viewer.images = images;
@@ -809,18 +922,27 @@ function openImageViewer(images, startIndex = 0) {
   preloadAdjacentImages(state.viewer.images, state.viewer.index);
   elements.imageViewer.classList.remove('is-hidden');
   elements.imageViewer.setAttribute('aria-hidden', 'false');
-  document.body.classList.add('modal-open');
+  syncBodyModalLock();
+  if (wasClosed) {
+    pushOverlayState('image-viewer');
+  }
 }
 
-function closeImageViewer() {
+function closeImageViewer(fromPopState = false) {
+  if (elements.imageViewer.classList.contains('is-hidden')) {
+    return;
+  }
+  if (!fromPopState) {
+    closeOverlayWithHistory(() => closeImageViewer(true));
+    return;
+  }
+
   state.viewer.open = false;
   elements.imageViewer.classList.add('is-hidden');
   elements.imageViewer.setAttribute('aria-hidden', 'true');
   elements.imageViewerBackdrop.style.opacity = '';
   elements.imageViewerShell.style.transform = '';
-  if (elements.productModal.classList.contains('is-hidden')) {
-    document.body.classList.remove('modal-open');
-  }
+  syncBodyModalLock();
 }
 
 function renderImageViewer() {
@@ -1105,9 +1227,18 @@ function updateCartItem(productId, action) {
   renderCart();
 }
 
-function toggleCart(open) {
+function toggleCart(open, fromPopState = false) {
+  const wasOpen = elements.cartDrawer.classList.contains('open');
+  if (!open && !fromPopState && wasOpen) {
+    closeOverlayWithHistory(() => toggleCart(false, true));
+    return;
+  }
+
   elements.cartDrawer.classList.toggle('open', open);
   if (open) {
+    if (!wasOpen) {
+      pushOverlayState('cart-drawer');
+    }
     elements.menuDrawer.classList.remove('open');
     elements.menuToggle.setAttribute('aria-expanded', 'false');
   }
@@ -1115,9 +1246,18 @@ function toggleCart(open) {
   elements.cartToggle.setAttribute('aria-expanded', String(open));
 }
 
-function toggleMenu(open) {
+function toggleMenu(open, fromPopState = false) {
+  const wasOpen = elements.menuDrawer.classList.contains('open');
+  if (!open && !fromPopState && wasOpen) {
+    closeOverlayWithHistory(() => toggleMenu(false, true));
+    return;
+  }
+
   elements.menuDrawer.classList.toggle('open', open);
   if (open) {
+    if (!wasOpen) {
+      pushOverlayState('menu-drawer');
+    }
     elements.cartDrawer.classList.remove('open');
     elements.cartToggle.setAttribute('aria-expanded', 'false');
   }
@@ -1126,11 +1266,75 @@ function toggleMenu(open) {
 }
 
 function closeAllDrawers() {
-  elements.cartDrawer.classList.remove('open');
-  elements.menuDrawer.classList.remove('open');
-  elements.drawerOverlay.classList.remove('open');
-  elements.cartToggle.setAttribute('aria-expanded', 'false');
-  elements.menuToggle.setAttribute('aria-expanded', 'false');
+  if (elements.menuDrawer.classList.contains('open')) {
+    toggleMenu(false);
+    return;
+  }
+  if (elements.cartDrawer.classList.contains('open')) {
+    toggleCart(false);
+  }
+}
+
+function openCheckoutModal() {
+  if (!state.cart.length) {
+    showToast('Add items to your cart before checkout.', 'info');
+    return;
+  }
+  elements.checkoutModalRemarks.value = elements.checkoutForm.querySelector('[name="remarks"]')?.value || '';
+  if (elements.cartDrawer.classList.contains('open')) {
+    toggleCart(false, true);
+  }
+  const wasClosed = elements.checkoutModal.classList.contains('is-hidden');
+  elements.checkoutModal.classList.remove('is-hidden');
+  elements.checkoutModal.setAttribute('aria-hidden', 'false');
+  if (wasClosed) {
+    pushOverlayState('checkout-modal');
+  }
+  syncBodyModalLock();
+}
+
+function closeCheckoutModal(fromPopState = false) {
+  if (elements.checkoutModal.classList.contains('is-hidden')) {
+    return;
+  }
+  if (!fromPopState) {
+    closeOverlayWithHistory(() => closeCheckoutModal(true));
+    return;
+  }
+
+  const mainRemarks = elements.checkoutForm.querySelector('[name="remarks"]');
+  if (mainRemarks) {
+    mainRemarks.value = elements.checkoutModalRemarks.value || '';
+  }
+  elements.checkoutModal.classList.add('is-hidden');
+  elements.checkoutModal.setAttribute('aria-hidden', 'true');
+  syncBodyModalLock();
+}
+
+async function openOrdersHistory() {
+  toggleMenu(false);
+  const wasClosed = elements.ordersHistory.classList.contains('is-hidden');
+  await loadOrderHistoryForUser();
+  elements.ordersHistory.classList.remove('is-hidden');
+  elements.ordersHistory.setAttribute('aria-hidden', 'false');
+  if (wasClosed) {
+    pushOverlayState('orders-history');
+  }
+  syncBodyModalLock();
+}
+
+function closeOrdersHistory(fromPopState = false) {
+  if (elements.ordersHistory.classList.contains('is-hidden')) {
+    return;
+  }
+  if (!fromPopState) {
+    closeOverlayWithHistory(() => closeOrdersHistory(true));
+    return;
+  }
+
+  elements.ordersHistory.classList.add('is-hidden');
+  elements.ordersHistory.setAttribute('aria-hidden', 'true');
+  syncBodyModalLock();
 }
 
 function generateOrderId() {
@@ -1142,13 +1346,14 @@ function generateOrderId() {
 
 async function handleCheckout(event) {
   event.preventDefault();
+  const sourceForm = event.currentTarget;
 
   if (!state.cart.length) {
     showToast('Add items to your cart before placing the order.', 'info');
     return;
   }
 
-  const formData = new FormData(elements.checkoutForm);
+  const formData = new FormData(sourceForm);
   const savedUser = JSON.parse(localStorage.getItem(USER_KEY) || '{}');
   const retailerName = savedUser?.shopName || state.user?.shopName || '';
   const retailerMobile = savedUser?.mobile || state.user?.mobile || '';
@@ -1187,6 +1392,26 @@ async function handleCheckout(event) {
     items: state.cart.map((item) => ({ ...item, orderId }))
   };
 
+  const historyRecord = {
+    localId: `${orderId}-${Date.now()}`,
+    orderId,
+    orderDate: dateTime,
+    shopName: retailerName,
+    mobile: retailerMobile,
+    remarks,
+    status: 'Pending Sync',
+    productCount: state.cart.reduce((sum, item) => sum + Number(item.quantity || 0), 0),
+    totalAmount: state.cart.reduce((sum, item) => sum + Number(item.price || 0) * Number(item.quantity || 0), 0),
+    items: state.cart.map((item) => ({
+      id: item.id,
+      product: item.name,
+      qty: Number(item.quantity || 0),
+      rate: Number(item.price || 0),
+      total: Number(item.price || 0) * Number(item.quantity || 0),
+      category: item.category || ''
+    }))
+  };
+
   const endpoint = elements.sheetEndpoint.value.trim();
   const localOrderRecord = {
     ...orderPayload,
@@ -1196,6 +1421,7 @@ async function handleCheckout(event) {
   };
 
   await addOrderToQueue(localOrderRecord);
+  await addOrderToHistory(historyRecord);
 
   if (endpoint && navigator.onLine) {
     try {
@@ -1206,11 +1432,13 @@ async function handleCheckout(event) {
         body: form
       });
       await updateOrderStatus(orderId, 'Synced');
+      await updateOrderHistoryStatus(orderId, 'Synced');
       await markOrderSynced(orderId);
       showToast('Order synced successfully', 'success');
     } catch (error) {
       console.error(error);
       await updateOrderStatus(orderId, 'Pending Sync');
+      await updateOrderHistoryStatus(orderId, 'Pending Sync');
       showToast('Order saved locally. Unable to sync now.', 'warning');
     }
   } else {
@@ -1225,8 +1453,10 @@ async function handleCheckout(event) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state.cart));
   renderCart();
   elements.checkoutForm.reset();
+  elements.checkoutModalForm.reset();
   updateSyncStatus();
   closeAllDrawers();
+  closeCheckoutModal(true);
 }
 
 function openDatabase() {
@@ -1240,6 +1470,12 @@ function openDatabase() {
       if (!db.objectStoreNames.contains(ORDERS_STORE)) {
         const orderStore = db.createObjectStore(ORDERS_STORE, { keyPath: 'orderId' });
         orderStore.createIndex('status', 'status', { unique: false });
+      }
+      if (!db.objectStoreNames.contains(ORDER_HISTORY_STORE)) {
+        const historyStore = db.createObjectStore(ORDER_HISTORY_STORE, { keyPath: 'localId' });
+        historyStore.createIndex('orderDate', 'orderDate', { unique: false });
+        historyStore.createIndex('mobile', 'mobile', { unique: false });
+        historyStore.createIndex('orderId', 'orderId', { unique: false });
       }
     };
     request.onsuccess = () => resolve(request.result);
@@ -1279,6 +1515,94 @@ async function addOrderToQueue(orderRecord) {
     tx.oncomplete = () => resolve();
     tx.onerror = () => reject(tx.error);
   });
+}
+
+async function addOrderToHistory(orderRecord) {
+  await pruneOrderHistory();
+  const db = await openDatabase();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(ORDER_HISTORY_STORE, 'readwrite');
+    const store = tx.objectStore(ORDER_HISTORY_STORE);
+    store.put(orderRecord);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+async function updateOrderHistoryStatus(orderId, status) {
+  const db = await openDatabase();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(ORDER_HISTORY_STORE, 'readwrite');
+    const store = tx.objectStore(ORDER_HISTORY_STORE);
+    const request = store.getAll();
+
+    request.onsuccess = () => {
+      const matched = (request.result || []).filter((item) => item.orderId === orderId);
+      matched.forEach((item) => {
+        item.status = status;
+        item.syncedAt = status === 'Synced' ? new Date().toISOString() : null;
+        store.put(item);
+      });
+    };
+
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+function getOrderCutoffDate() {
+  const cutoff = new Date();
+  cutoff.setMonth(cutoff.getMonth() - ORDER_RETENTION_MONTHS);
+  return cutoff;
+}
+
+async function pruneOrderHistory() {
+  const cutoff = getOrderCutoffDate().getTime();
+  const db = await openDatabase();
+
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(ORDER_HISTORY_STORE, 'readwrite');
+    const store = tx.objectStore(ORDER_HISTORY_STORE);
+    const request = store.getAll();
+
+    request.onsuccess = () => {
+      (request.result || []).forEach((order) => {
+        const orderTime = new Date(order.orderDate || order.dateTime || 0).getTime();
+        if (!orderTime || orderTime < cutoff) {
+          store.delete(order.localId);
+        }
+      });
+    };
+
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+async function loadOrderHistoryForUser() {
+  await pruneOrderHistory();
+  const db = await openDatabase();
+  const currentMobile = String(state.user?.mobile || '').trim();
+  const cutoff = getOrderCutoffDate().getTime();
+
+  const history = await new Promise((resolve) => {
+    const tx = db.transaction(ORDER_HISTORY_STORE, 'readonly');
+    const store = tx.objectStore(ORDER_HISTORY_STORE);
+    const request = store.getAll();
+    request.onsuccess = () => resolve(request.result || []);
+    request.onerror = () => resolve([]);
+  });
+
+  state.orderHistory = history
+    .filter((order) => {
+      const orderTime = new Date(order.orderDate || order.dateTime || 0).getTime();
+      const mobile = String(order.mobile || '').trim();
+      return orderTime >= cutoff && mobile && mobile === currentMobile;
+    })
+    .sort((a, b) => new Date(b.orderDate || b.dateTime || 0).getTime() - new Date(a.orderDate || a.dateTime || 0).getTime());
+
+  state.selectedHistoryOrderId = state.orderHistory[0]?.localId || null;
+  renderOrderHistory();
 }
 
 async function updateOrderStatus(orderId, status) {
@@ -1360,6 +1684,7 @@ async function syncPendingOrders() {
         body: form
       });
       await updateOrderStatus(order.orderId, 'Synced');
+      await updateOrderHistoryStatus(order.orderId, 'Synced');
       await markOrderSynced(order.orderId);
     } catch (error) {
       console.error(error);
@@ -1368,6 +1693,132 @@ async function syncPendingOrders() {
 
   updateSyncStatus();
   showToast('Pending orders synced successfully', 'success');
+}
+
+function renderOrderHistory() {
+  const term = state.orderSearchTerm;
+  const filtered = state.orderHistory.filter((order) => {
+    if (!term) return true;
+    const products = (order.items || []).map((item) => item.product || '').join(' ');
+    const dateText = formatOrderDate(order.orderDate);
+    const searchText = `${order.orderId || ''} ${order.orderDate || ''} ${dateText} ${products}`.toLowerCase();
+    return searchText.includes(term);
+  });
+
+  elements.ordersEmpty.classList.toggle('is-hidden', filtered.length > 0);
+  elements.ordersList.classList.toggle('is-hidden', filtered.length === 0);
+
+  if (!filtered.length) {
+    elements.ordersList.innerHTML = '';
+    elements.ordersDetail.innerHTML = '<div class="orders-detail-placeholder">No matching orders found.</div>';
+    return;
+  }
+
+  if (!filtered.find((order) => order.localId === state.selectedHistoryOrderId)) {
+    state.selectedHistoryOrderId = filtered[0].localId;
+  }
+
+  elements.ordersList.innerHTML = filtered
+    .map((order) => {
+      const isActive = order.localId === state.selectedHistoryOrderId;
+      return `
+        <button class="order-row ${isActive ? 'active' : ''}" type="button" data-order-id="${escapeHtml(order.localId)}">
+          <div class="order-row-head">
+            <span class="order-no">${escapeHtml(order.orderId || '-')}</span>
+            <span class="order-status">${escapeHtml(order.status || 'Submitted')}</span>
+          </div>
+          <div class="order-row-meta">${escapeHtml(formatOrderDate(order.orderDate))}</div>
+          <div class="order-row-foot">
+            <span>${Number(order.productCount || 0)} items</span>
+            <strong>${formatCurrency(order.totalAmount || 0)}</strong>
+          </div>
+        </button>
+      `;
+    })
+    .join('');
+
+  const selected = filtered.find((order) => order.localId === state.selectedHistoryOrderId) || filtered[0];
+  renderOrderDetail(selected);
+}
+
+function renderOrderDetail(order) {
+  if (!order) {
+    elements.ordersDetail.innerHTML = '<div class="orders-detail-placeholder">Select an order to view full invoice details.</div>';
+    return;
+  }
+
+  const items = order.items || [];
+  const rowsHtml = items
+    .map(
+      (item, index) => `
+        <tr>
+          <td>${index + 1}</td>
+          <td>${escapeHtml(item.product || '-')}</td>
+          <td>${Number(item.qty || 0)}</td>
+          <td>${formatCurrency(item.rate || 0)}</td>
+          <td>${formatCurrency(item.total || 0)}</td>
+        </tr>
+      `
+    )
+    .join('');
+
+  elements.ordersDetail.innerHTML = `
+    <article class="invoice-card">
+      <header class="invoice-header">
+        <div>
+          <h4>Order Invoice</h4>
+          <p>Patel Stores Retailer Copy</p>
+        </div>
+        <span class="invoice-status">${escapeHtml(order.status || 'Submitted')}</span>
+      </header>
+
+      <section class="invoice-meta-grid">
+        <div><span>Order Number</span><strong>${escapeHtml(order.orderId || '-')}</strong></div>
+        <div><span>Date</span><strong>${escapeHtml(formatOrderDate(order.orderDate))}</strong></div>
+        <div><span>Retailer Name</span><strong>${escapeHtml(order.shopName || '-')}</strong></div>
+        <div><span>Mobile</span><strong>${escapeHtml(order.mobile || '-')}</strong></div>
+      </section>
+
+      <section class="invoice-remarks">
+        <h5>Remarks</h5>
+        <p>${escapeHtml(order.remarks || '-')}</p>
+      </section>
+
+      <section class="invoice-table-wrap">
+        <table class="invoice-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Product</th>
+              <th>Qty</th>
+              <th>Rate</th>
+              <th>Total</th>
+            </tr>
+          </thead>
+          <tbody>${rowsHtml}</tbody>
+        </table>
+      </section>
+
+      <footer class="invoice-total-row">
+        <span>Products: ${Number(order.productCount || 0)}</span>
+        <strong>Grand Total: ${formatCurrency(order.totalAmount || 0)}</strong>
+      </footer>
+    </article>
+  `;
+}
+
+function formatOrderDate(value) {
+  const date = new Date(value || Date.now());
+  if (Number.isNaN(date.getTime())) {
+    return '-';
+  }
+  return date.toLocaleString('en-IN', {
+    year: 'numeric',
+    month: 'short',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
 }
 
 function bindImageLoadEffects(scopeNode) {

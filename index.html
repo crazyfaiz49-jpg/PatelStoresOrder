@@ -231,6 +231,11 @@ aria-label="Close menu">
 <div id="menu-category-cards" class="filter-row menu-filter-row" aria-label="Categories in menu"></div>
 </div>
 
+<div class="menu-section">
+<h4>Orders</h4>
+<button id="menu-my-orders" class="menu-action-btn" type="button">My Orders</button>
+</div>
+
 </div>
 
 </aside>
@@ -359,6 +364,59 @@ Place Order
         <button id="image-viewer-next" class="gallery-nav next" type="button" aria-label="Next image">›</button>
         <div id="image-viewer-thumbs" class="image-viewer-thumbs"></div>
     </div>
+</section>
+
+<section id="checkout-modal" class="checkout-modal is-hidden" aria-hidden="true">
+    <div id="checkout-modal-backdrop" class="checkout-modal-backdrop"></div>
+    <article class="checkout-modal-card" role="dialog" aria-modal="true" aria-label="Checkout">
+        <button id="checkout-modal-close" class="icon-btn modal-close-btn" type="button" aria-label="Close checkout">×</button>
+        <form id="checkout-modal-form" class="checkout-modal-form">
+            <h3>Checkout</h3>
+            <p>Review remarks and place your order.</p>
+
+            <label>
+                Remarks
+                <textarea
+                    id="checkout-modal-remarks"
+                    name="remarks"
+                    rows="4"
+                    placeholder="Delivery instructions"></textarea>
+            </label>
+
+            <button class="submit-btn" type="submit">Place Order</button>
+        </form>
+    </article>
+</section>
+
+<section id="orders-history" class="orders-history is-hidden" aria-hidden="true">
+    <div class="orders-history-backdrop"></div>
+    <article class="orders-history-card" role="dialog" aria-modal="true" aria-label="My orders">
+        <header class="orders-history-header">
+            <div>
+                <h3>My Orders</h3>
+                <p>Last 6 months • Available offline</p>
+            </div>
+            <button id="orders-history-close" class="icon-btn" type="button" aria-label="Close my orders">×</button>
+        </header>
+
+        <div class="orders-history-toolbar">
+            <label class="search-shell orders-search-shell">
+                <span class="search-icon">⌕</span>
+                <input id="orders-search" type="text" placeholder="Search by order no, date, product...">
+            </label>
+        </div>
+
+        <div class="orders-history-layout">
+            <aside class="orders-list-pane">
+                <div id="orders-list" class="orders-list"></div>
+                <div id="orders-empty" class="empty-state is-hidden">No orders found for the last 6 months.</div>
+            </aside>
+
+            <section id="orders-detail" class="orders-detail">
+                <div class="orders-detail-placeholder">Select an order to view full invoice details.</div>
+            </section>
+        </div>
+    </article>
 </section>
 
 </div>
