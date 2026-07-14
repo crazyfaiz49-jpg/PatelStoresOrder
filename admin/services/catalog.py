@@ -2,6 +2,7 @@ import csv
 import json
 import shutil
 import subprocess
+import time
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
@@ -25,7 +26,11 @@ class ImportReport:
     added: int = 0
     updated: int = 0
     skipped: int = 0
+    duplicate: int = 0
     errors: int = 0
+    total: int = 0
+    elapsed_seconds: float = 0.0
+    report_path: str = ''
 
 
 class PublishError(RuntimeError):
@@ -1156,7 +1161,40 @@ def _normalize_header(header: str) -> str:
 
 
 def import_products_from_excel(file_path: str) -> ImportReport:
-    workbook = load_workbook(file_path, data_only=True)
+    return import_products_from_excel_batched(file_path)
+
+
+def _save_import_report(log_rows: List[Dict]) -> str:
+    if not log_rows:
+        return ''
+    report_name = f"Import_Report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
+    report_path = ROOT_DIR / report_name
+    workbook = Workbook()
+    sheet = workbook.active
+    sheet.title = 'Import Report'
+    sheet.append(['Row Number', 'Product Name', 'Reason'])
+    for row in log_rows:
+        sheet.append([row.get('row_number', ''), row.get('product_name', ''), row.get('reason', '')])
+    workbook.save(report_path)
+    return str(report_path)
+
+
+def import_products_from_excel_batched(
+    file_path: str,
+    options: Optional[Dict] = None,
+    progress_callback: Optional[Callable[[Dict], None]] = None,
+    pause_check: Optional[Callable[[], bool]] = None,
+    cancel_check: Optional[Callable[[], bool]] = None,
+    batch_size: int = 100,
+) -> ImportReport:
+    options = options or {}
+    update_existing = bool(options.get('update_existing', True))
+    insert_new = bool(options.get('insert_new', True))
+    ignore_duplicate_barcode = bool(options.get('ignore_duplicate_barcode', True))
+    ignore_empty_rows = bool(options.get('ignore_empty_rows', True))
+    skip_invalid_images = bool(options.get('skip_invalid_images', True))
+
+    workbook = load_workbook(file_path, data_only=True, read_only=True)
     sheet = workbook.active
 
     headers_raw = [str(cell).strip() if cell is not None else '' for cell in next(sheet.iter_rows(min_row=1, max_row=1, values_only=True))]
@@ -1189,55 +1227,135 @@ def import_products_from_excel(file_path: str) -> ImportReport:
     if idx['product_name'] is None:
         raise ValueError('Import file must contain Product Name column.')
 
-    connection = get_connection()
-    report = ImportReport()
-    try:
-        for row in sheet.iter_rows(min_row=2, values_only=True):
-            if not any(cell is not None and str(cell).strip() for cell in row):
-                continue
-            try:
-                product_name = str(row[idx['product_name']]).strip() if idx['product_name'] is not None and row[idx['product_name']] is not None else ''
-                if not product_name:
-                    report.skipped += 1
-                    continue
+    rows_values = list(sheet.iter_rows(min_row=2, values_only=True))
+    total_rows = len(rows_values)
+    report = ImportReport(total=total_rows)
+    log_rows: List[Dict] = []
+    start = time.perf_counter()
 
+    def emit(status: str, imported_count: int, current_product: str = '', percent: int = 0):
+        if progress_callback:
+            progress_callback(
+                {
+                    'status': status,
+                    'imported': imported_count,
+                    'total': total_rows,
+                    'current_product': current_product,
+                    'percent': percent,
+                }
+            )
+
+    connection = get_connection()
+    connection.execute('PRAGMA temp_store = MEMORY')
+    connection.execute('PRAGMA cache_size = -20000')
+    connection.execute('PRAGMA synchronous = NORMAL')
+    insert_sql = (
+        'INSERT INTO products ('
+        'product_name, category, price, description, image, purchase_price, selling_price, wholesale_price, '
+        'barcode, gst, hsn, stock, min_stock, status, supplier, created_at, updated_at'
+        ') VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+    )
+    update_sql = (
+        'UPDATE products SET product_name = ?, category = ?, price = ?, description = ?, image = ?, purchase_price = ?, '
+        'selling_price = ?, wholesale_price = ?, barcode = ?, gst = ?, hsn = ?, stock = ?, min_stock = ?, status = ?, '
+        'supplier = ?, updated_at = ? WHERE id = ?'
+    )
+
+    try:
+        emit('Reading Excel...', 0, percent=2)
+        connection.execute('BEGIN')
+        existing_rows = connection.execute('SELECT id, product_name, category, barcode FROM products').fetchall()
+        barcode_map: Dict[str, int] = {}
+        name_map: Dict[str, int] = {}
+        for row in existing_rows:
+            barcode_key = (row['barcode'] or '').strip().lower()
+            if barcode_key:
+                barcode_map[barcode_key] = int(row['id'])
+            name_key = f"{(row['product_name'] or '').strip().lower()}|{(row['category'] or '').strip().lower()}"
+            if name_key and name_key != '|':
+                name_map[name_key] = int(row['id'])
+
+        insert_batch: List[tuple] = []
+        update_batch: List[tuple] = []
+        processed = 0
+        seen_import_barcodes = set()
+        seen_import_names = set()
+
+        for row_number, row in enumerate(rows_values, start=2):
+            while pause_check and pause_check():
+                time.sleep(0.1)
+            if cancel_check and cancel_check():
+                raise RuntimeError('IMPORT_CANCELLED')
+
+            if ignore_empty_rows and not any(cell is not None and str(cell).strip() for cell in row):
+                report.skipped += 1
+                log_rows.append({'row_number': row_number, 'product_name': '', 'reason': 'Empty row'})
+                continue
+
+            product_name = str(row[idx['product_name']]).strip() if idx['product_name'] is not None and row[idx['product_name']] is not None else ''
+            if not product_name:
+                report.skipped += 1
+                log_rows.append({'row_number': row_number, 'product_name': '', 'reason': 'Missing product name'})
+                continue
+
+            try:
                 payload = {
                     'product_name': product_name,
                     'category': str(row[idx['category']]).strip() if idx['category'] is not None and row[idx['category']] is not None else 'General',
                     'supplier': str(row[idx['supplier']]).strip() if idx['supplier'] is not None and row[idx['supplier']] is not None else '',
-                    'purchase_price': float(row[idx['purchase_price']]) if idx['purchase_price'] is not None and row[idx['purchase_price']] not in (None, '') else 0,
-                    'selling_price': float(row[idx['selling_price']]) if idx['selling_price'] is not None and row[idx['selling_price']] not in (None, '') else 0,
-                    'wholesale_price': float(row[idx['wholesale_price']]) if idx['wholesale_price'] is not None and row[idx['wholesale_price']] not in (None, '') else 0,
+                    'purchase_price': _safe_float(row[idx['purchase_price']]) if idx['purchase_price'] is not None else 0,
+                    'selling_price': _safe_float(row[idx['selling_price']]) if idx['selling_price'] is not None else 0,
+                    'wholesale_price': _safe_float(row[idx['wholesale_price']]) if idx['wholesale_price'] is not None else 0,
                     'barcode': str(row[idx['barcode']]).strip() if idx['barcode'] is not None and row[idx['barcode']] is not None else '',
                     'description': str(row[idx['description']]).strip() if idx['description'] is not None and row[idx['description']] is not None else '',
-                    'gst': float(row[idx['gst']]) if idx['gst'] is not None and row[idx['gst']] not in (None, '') else 0,
+                    'gst': _safe_float(row[idx['gst']]) if idx['gst'] is not None else 0,
                     'hsn': str(row[idx['hsn']]).strip() if idx['hsn'] is not None and row[idx['hsn']] is not None else '',
-                    'stock': float(row[idx['stock']]) if idx['stock'] is not None and row[idx['stock']] not in (None, '') else 0,
-                    'min_stock': float(row[idx['min_stock']]) if idx['min_stock'] is not None and row[idx['min_stock']] not in (None, '') else 0,
+                    'stock': _safe_float(row[idx['stock']]) if idx['stock'] is not None else 0,
+                    'min_stock': _safe_float(row[idx['min_stock']]) if idx['min_stock'] is not None else 0,
                     'status': str(row[idx['status']]).strip() if idx['status'] is not None and row[idx['status']] is not None else 'Active',
                     'image': str(row[idx['image']]).strip() if idx['image'] is not None and row[idx['image']] is not None else '',
                 }
-                ensure_category(payload['category'])
-                key_barcode = payload['barcode']
-                existing = None
-                if key_barcode:
-                    existing = connection.execute('SELECT id FROM products WHERE barcode = ?', (key_barcode,)).fetchone()
-                if existing is None:
-                    existing = connection.execute(
-                        'SELECT id FROM products WHERE LOWER(product_name) = LOWER(?) AND LOWER(category) = LOWER(?)',
-                        (payload['product_name'], payload['category']),
-                    ).fetchone()
 
-                if existing:
-                    data = _normalize_payload(payload)
-                    connection.execute(
-                        '''
-                        UPDATE products
-                        SET product_name = ?, category = ?, price = ?, description = ?, image = ?,
-                            purchase_price = ?, selling_price = ?, wholesale_price = ?,
-                            barcode = ?, gst = ?, hsn = ?, stock = ?, min_stock = ?, status = ?, supplier = ?, updated_at = ?
-                        WHERE id = ?
-                        ''',
+                if skip_invalid_images and payload.get('image'):
+                    image_name = normalize_image_value(payload['image'])
+                    if image_name and not (ROOT_DIR / 'images' / image_name).exists():
+                        payload['image'] = ''
+
+                ensure_category(payload['category'])
+                data = _normalize_payload(payload)
+                barcode_key = data['barcode'].strip().lower()
+                name_key = f"{data['product_name'].strip().lower()}|{data['category'].strip().lower()}"
+
+                if barcode_key and barcode_key in seen_import_barcodes:
+                    report.duplicate += 1
+                    reason = 'Duplicate barcode in import file'
+                    if ignore_duplicate_barcode:
+                        report.skipped += 1
+                        log_rows.append({'row_number': row_number, 'product_name': data['product_name'], 'reason': reason})
+                    else:
+                        report.errors += 1
+                        log_rows.append({'row_number': row_number, 'product_name': data['product_name'], 'reason': reason})
+                    continue
+
+                if name_key in seen_import_names:
+                    report.duplicate += 1
+                    report.skipped += 1
+                    log_rows.append({'row_number': row_number, 'product_name': data['product_name'], 'reason': 'Duplicate product name in import file'})
+                    continue
+
+                existing_id = barcode_map.get(barcode_key) if barcode_key else None
+                if existing_id is None:
+                    existing_id = name_map.get(name_key)
+
+                seen_import_barcodes.add(barcode_key)
+                seen_import_names.add(name_key)
+
+                if existing_id:
+                    if not update_existing:
+                        report.skipped += 1
+                        log_rows.append({'row_number': row_number, 'product_name': data['product_name'], 'reason': 'Update existing disabled'})
+                        continue
+                    update_batch.append(
                         (
                             data['product_name'],
                             data['category'],
@@ -1255,22 +1373,17 @@ def import_products_from_excel(file_path: str) -> ImportReport:
                             data['status'],
                             data['supplier'],
                             datetime.now().isoformat(timespec='seconds'),
-                            existing['id'],
-                        ),
+                            existing_id,
+                        )
                     )
                     report.updated += 1
                 else:
-                    data = _normalize_payload(payload)
+                    if not insert_new:
+                        report.skipped += 1
+                        log_rows.append({'row_number': row_number, 'product_name': data['product_name'], 'reason': 'Insert new disabled'})
+                        continue
                     now = datetime.now().isoformat(timespec='seconds')
-                    connection.execute(
-                        '''
-                        INSERT INTO products (
-                            product_name, category, price, description, image,
-                            purchase_price, selling_price, wholesale_price,
-                            barcode, gst, hsn, stock, min_stock, status, supplier,
-                            created_at, updated_at
-                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                        ''',
+                    insert_batch.append(
                         (
                             data['product_name'],
                             data['category'],
@@ -1289,18 +1402,51 @@ def import_products_from_excel(file_path: str) -> ImportReport:
                             data['supplier'],
                             now,
                             now,
-                        ),
+                        )
                     )
                     report.added += 1
-            except Exception:
-                report.errors += 1
-                logger.exception('Import row failed: %s', row)
+                    if barcode_key:
+                        barcode_map[barcode_key] = -1
+                    name_map[name_key] = -1
 
+                processed += 1
+                elapsed = max(time.perf_counter() - start, 0.001)
+                speed = processed / elapsed
+                percent = min(90, int((row_number - 1) * 90 / max(total_rows, 1)))
+                emit('Validating...', processed, data['product_name'], percent)
+                if progress_callback:
+                    progress_callback({'speed': speed})
+
+                if len(insert_batch) + len(update_batch) >= batch_size:
+                    emit('Saving Database...', processed, data['product_name'], max(percent, 91))
+                    if insert_batch:
+                        connection.executemany(insert_sql, insert_batch)
+                        insert_batch.clear()
+                    if update_batch:
+                        connection.executemany(update_sql, update_batch)
+                        update_batch.clear()
+            except Exception as ex:
+                report.errors += 1
+                log_rows.append({'row_number': row_number, 'product_name': product_name, 'reason': str(ex)})
+
+        emit('Saving Database...', processed, percent=95)
+        if insert_batch:
+            connection.executemany(insert_sql, insert_batch)
+        if update_batch:
+            connection.executemany(update_sql, update_batch)
         connection.commit()
+
+        emit('Generating Catalog...', processed, percent=98)
+        generate_catalog_json()
+    except Exception as ex:
+        connection.rollback()
+        if str(ex) != 'IMPORT_CANCELLED':
+            raise
     finally:
         connection.close()
 
-    generate_catalog_json()
+    report.elapsed_seconds = time.perf_counter() - start
+    report.report_path = _save_import_report(log_rows)
     return report
 
 
@@ -1329,9 +1475,9 @@ def generate_product_import_sample(file_path: str):
     sheet.title = 'Products Import Sample'
 
     headers = [
+        'Supplier',
         'Product Name',
         'Category',
-        'Supplier',
         'Purchase Price',
         'Selling Price',
         'Wholesale Price',
@@ -1340,14 +1486,14 @@ def generate_product_import_sample(file_path: str):
         'HSN',
         'Stock',
         'Minimum Stock',
-        'Description',
         'Status',
         'Image Path',
+        'Description',
     ]
     sample_row = [
+        'Patel Distributors',
         'Sample Product',
         'General',
-        'Patel Distributors',
         120.0,
         150.0,
         130.0,
@@ -1356,13 +1502,52 @@ def generate_product_import_sample(file_path: str):
         '3923',
         25,
         5,
-        'Sample description',
         'Active',
         'images/placeholder.svg',
+        'Sample description',
+    ]
+    sample_row_two = [
+        'Metro Supplies',
+        'Steel Lunch Box',
+        'Kitchen',
+        180.0,
+        240.0,
+        205.0,
+        '7894561230001',
+        12.0,
+        '7323',
+        40,
+        8,
+        'Active',
+        'images/lunch-box.jpg',
+        'Food grade steel with lock lid',
     ]
 
     sheet.append(headers)
     sheet.append(sample_row)
+    sheet.append(sample_row_two)
+
+    from openpyxl.styles import Alignment, Font, PatternFill
+    from openpyxl.worksheet.datavalidation import DataValidation
+
+    sheet.freeze_panes = 'A2'
+    sheet.auto_filter.ref = f'A1:N1'
+
+    header_fill = PatternFill(start_color='1E3A8A', end_color='1E3A8A', fill_type='solid')
+    for col in range(1, len(headers) + 1):
+        cell = sheet.cell(row=1, column=col)
+        cell.fill = header_fill
+        cell.font = Font(color='FFFFFF', bold=True)
+        cell.alignment = Alignment(horizontal='center', vertical='center')
+
+    widths = [20, 26, 20, 14, 14, 16, 18, 10, 12, 10, 14, 12, 24, 38]
+    for idx, width in enumerate(widths, start=1):
+        sheet.column_dimensions[chr(64 + idx)].width = width
+
+    status_validation = DataValidation(type='list', formula1='"Active,Inactive"', allow_blank=True)
+    sheet.add_data_validation(status_validation)
+    status_validation.add('L2:L10000')
+
     workbook.save(file_path)
 
 

@@ -1,7 +1,9 @@
 from functools import partial
 import sys
+import time
 import traceback
 from pathlib import Path
+from typing import Dict
 
 from PySide6 import QtCore, QtGui, QtPrintSupport, QtWidgets
 
@@ -62,6 +64,7 @@ from admin.services.catalog import (
     get_settings,
     import_retailers_from_excel,
     import_products_from_excel,
+    import_products_from_excel_batched,
     list_products_lookup,
     list_orders,
     list_retailers,
@@ -523,6 +526,184 @@ class PublishWorker(QtCore.QObject):
             self.success.emit(result)
         except Exception as ex:
             self.failed.emit(str(ex))
+
+
+class ImportOptionsDialog(QtWidgets.QDialog):
+    def __init__(self, parent=None, auto_publish_default: bool = True):
+        super().__init__(parent)
+        self.setWindowTitle('Bulk Import Options')
+        self.resize(460, 380)
+        layout = QtWidgets.QVBoxLayout(self)
+
+        self.update_existing = QtWidgets.QCheckBox('Update Existing Products')
+        self.update_existing.setChecked(True)
+        self.insert_new = QtWidgets.QCheckBox('Insert New Products')
+        self.insert_new.setChecked(True)
+        self.ignore_duplicate_barcode = QtWidgets.QCheckBox('Ignore Duplicate Barcode')
+        self.ignore_duplicate_barcode.setChecked(True)
+        self.ignore_empty_rows = QtWidgets.QCheckBox('Ignore Empty Rows')
+        self.ignore_empty_rows.setChecked(True)
+        self.skip_invalid_images = QtWidgets.QCheckBox('Skip Invalid Images')
+        self.skip_invalid_images.setChecked(True)
+        self.auto_resize_images = QtWidgets.QCheckBox('Auto Resize Images')
+        self.auto_resize_images.setChecked(False)
+        self.auto_publish_after_import = QtWidgets.QCheckBox('Auto Publish After Import')
+        self.auto_publish_after_import.setChecked(auto_publish_default)
+
+        for check in [
+            self.update_existing,
+            self.insert_new,
+            self.ignore_duplicate_barcode,
+            self.ignore_empty_rows,
+            self.skip_invalid_images,
+            self.auto_resize_images,
+            self.auto_publish_after_import,
+        ]:
+            layout.addWidget(check)
+
+        layout.addStretch()
+        buttons = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.Ok | QtWidgets.QDialogButtonBox.Cancel)
+        buttons.button(QtWidgets.QDialogButtonBox.Ok).setText('Start Import')
+        buttons.button(QtWidgets.QDialogButtonBox.Ok).setDefault(True)
+        buttons.accepted.connect(self.accept)
+        buttons.rejected.connect(self.reject)
+        layout.addWidget(buttons)
+
+    def options(self) -> Dict:
+        return {
+            'update_existing': self.update_existing.isChecked(),
+            'insert_new': self.insert_new.isChecked(),
+            'ignore_duplicate_barcode': self.ignore_duplicate_barcode.isChecked(),
+            'ignore_empty_rows': self.ignore_empty_rows.isChecked(),
+            'skip_invalid_images': self.skip_invalid_images.isChecked(),
+            'auto_resize_images': self.auto_resize_images.isChecked(),
+            'auto_publish_after_import': self.auto_publish_after_import.isChecked(),
+        }
+
+
+class ImportProgressDialog(QtWidgets.QDialog):
+    pauseRequested = QtCore.Signal()
+    resumeRequested = QtCore.Signal()
+    cancelRequested = QtCore.Signal()
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle('Importing Products...')
+        self.resize(560, 320)
+        self.setWindowModality(QtCore.Qt.WindowModal)
+        layout = QtWidgets.QVBoxLayout(self)
+
+        self.title = QtWidgets.QLabel('Importing Products...')
+        self.title.setStyleSheet('font-size: 18px; font-weight: 700;')
+        layout.addWidget(self.title)
+
+        self.progress = QtWidgets.QProgressBar()
+        self.progress.setRange(0, 100)
+        layout.addWidget(self.progress)
+
+        self.imported_label = QtWidgets.QLabel('Imported: 0 / 0')
+        self.current_label = QtWidgets.QLabel('Current Product: -')
+        self.speed_label = QtWidgets.QLabel('Speed: 0 Products/sec')
+        self.eta_label = QtWidgets.QLabel('Estimated Time Left: 00:00')
+        self.status_label = QtWidgets.QLabel('Status: Reading Excel...')
+        for lbl in [self.imported_label, self.current_label, self.speed_label, self.eta_label, self.status_label]:
+            layout.addWidget(lbl)
+
+        buttons = QtWidgets.QHBoxLayout()
+        self.pause_btn = QtWidgets.QPushButton('Pause')
+        self.resume_btn = QtWidgets.QPushButton('Resume')
+        self.cancel_btn = QtWidgets.QPushButton('Cancel')
+        self.resume_btn.setEnabled(False)
+        self.pause_btn.clicked.connect(self._pause)
+        self.resume_btn.clicked.connect(self._resume)
+        self.cancel_btn.clicked.connect(self.cancelRequested.emit)
+        buttons.addWidget(self.pause_btn)
+        buttons.addWidget(self.resume_btn)
+        buttons.addWidget(self.cancel_btn)
+        buttons.addStretch()
+        layout.addLayout(buttons)
+
+    def _pause(self):
+        self.pause_btn.setEnabled(False)
+        self.resume_btn.setEnabled(True)
+        self.pauseRequested.emit()
+
+    def _resume(self):
+        self.pause_btn.setEnabled(True)
+        self.resume_btn.setEnabled(False)
+        self.resumeRequested.emit()
+
+    def keyPressEvent(self, event):
+        if event.key() == QtCore.Qt.Key_Escape:
+            self.cancelRequested.emit()
+            return
+        super().keyPressEvent(event)
+
+    def update_payload(self, payload: Dict):
+        percent = int(payload.get('percent', 0) or 0)
+        imported = int(payload.get('imported', 0) or 0)
+        total = int(payload.get('total', 0) or 0)
+        speed = float(payload.get('speed', 0) or 0)
+        remaining = max(total - imported, 0)
+        eta = int(remaining / speed) if speed > 0 else 0
+        self.progress.setValue(max(0, min(100, percent)))
+        self.imported_label.setText(f'Imported: {imported} / {total}')
+        self.current_label.setText(f"Current Product: {payload.get('current_product', '-') or '-'}")
+        self.speed_label.setText(f'Speed: {speed:.0f} Products/sec')
+        self.eta_label.setText(f'Estimated Time Left: {eta // 60:02d}:{eta % 60:02d}')
+        self.status_label.setText(f"Status: {payload.get('status', 'Working...')}")
+
+
+class ImportWorker(QtCore.QObject):
+    progress = QtCore.Signal(dict)
+    completed = QtCore.Signal(dict)
+    failed = QtCore.Signal(str)
+    cancelled = QtCore.Signal(dict)
+
+    def __init__(self, file_path: str, options: Dict):
+        super().__init__()
+        self.file_path = file_path
+        self.options = options
+        self._paused = False
+        self._cancelled = False
+
+    def pause(self):
+        self._paused = True
+
+    def resume(self):
+        self._paused = False
+
+    def cancel(self):
+        self._cancelled = True
+
+    def run(self):
+        started = time.perf_counter()
+        latest = {'imported': 0, 'total': 0, 'speed': 0.0, 'status': 'Reading Excel...', 'current_product': '', 'percent': 0}
+
+        def progress_callback(payload: Dict):
+            latest.update(payload)
+            elapsed = max(time.perf_counter() - started, 0.001)
+            if latest.get('imported'):
+                latest['speed'] = float(latest.get('imported', 0)) / elapsed
+            self.progress.emit(dict(latest))
+
+        try:
+            report = import_products_from_excel_batched(
+                self.file_path,
+                options=self.options,
+                progress_callback=progress_callback,
+                pause_check=lambda: self._paused,
+                cancel_check=lambda: self._cancelled,
+            )
+            if self._cancelled:
+                self.cancelled.emit({'report': report})
+                return
+            self.completed.emit({'report': report})
+        except Exception as ex:
+            if str(ex) == 'IMPORT_CANCELLED':
+                self.cancelled.emit({'report': None})
+            else:
+                self.failed.emit(str(ex))
 
 
 class OrderDialog(QtWidgets.QDialog):
@@ -1385,6 +1566,11 @@ class AdminWindow(QtWidgets.QMainWindow):
         self._publish_retry_timer.setInterval(45000)
         self._publish_retry_timer.timeout.connect(self._retry_auto_publish)
         self.auto_publish_enabled = self._settings_store().value('autopublish.enabled', True, type=bool)
+        self._import_thread = None
+        self._import_worker = None
+        self._import_dialog = None
+        self._import_auto_publish_requested = False
+        self._import_in_progress = False
         self._build_ui()
         self._build_shortcuts()
         self._apply_theme(self.current_theme)
@@ -1661,6 +1847,7 @@ class AdminWindow(QtWidgets.QMainWindow):
         self.table.itemDoubleClicked.connect(lambda _: self.edit_selected_product())
         self.table.itemChanged.connect(self._on_row_check_changed)
         self.table.itemSelectionChanged.connect(self._sync_selection_to_checks)
+        self.table.verticalScrollBar().valueChanged.connect(self._load_visible_images)
         root.addWidget(self.table)
         self.table.setColumnHidden(16, True)
 
@@ -1680,7 +1867,8 @@ class AdminWindow(QtWidgets.QMainWindow):
         QtGui.QShortcut(QtGui.QKeySequence('Ctrl+E'), self, self.edit_selected_product)
         QtGui.QShortcut(QtGui.QKeySequence('Ctrl+D'), self, self.duplicate_selected_product)
         QtGui.QShortcut(QtGui.QKeySequence('Ctrl+I'), self, self.import_excel)
-        QtGui.QShortcut(QtGui.QKeySequence('Ctrl+Shift+I'), self, self.download_import_sample)
+        QtGui.QShortcut(QtGui.QKeySequence('Ctrl+Shift+I'), self, self.import_excel)
+        QtGui.QShortcut(QtGui.QKeySequence('Ctrl+Shift+S'), self, self.download_import_sample)
         QtGui.QShortcut(QtGui.QKeySequence('Ctrl+S'), self, self.publish)
         QtGui.QShortcut(QtGui.QKeySequence('Ctrl+R'), self, self.refresh_products)
         QtGui.QShortcut(QtGui.QKeySequence('Ctrl+F'), self, self.focus_search)
@@ -1901,7 +2089,7 @@ class AdminWindow(QtWidgets.QMainWindow):
         self.statusBar().showMessage(message, timeout_ms)
 
     def _queue_auto_publish(self):
-        if not self.auto_publish_enabled:
+        if not self.auto_publish_enabled or self._import_in_progress:
             return
         self._publish_pending = True
         if self._publish_thread is None:
@@ -2023,6 +2211,35 @@ class AdminWindow(QtWidgets.QMainWindow):
         except ValueError:
             return None
 
+    def _load_visible_images(self):
+        if self._import_in_progress or self.table.rowCount() == 0:
+            return
+        top_index = self.table.indexAt(QtCore.QPoint(0, 0)).row()
+        if top_index < 0:
+            top_index = 0
+        bottom_point = QtCore.QPoint(0, self.table.viewport().height() - 1)
+        bottom_index = self.table.indexAt(bottom_point).row()
+        if bottom_index < 0:
+            bottom_index = min(self.table.rowCount() - 1, top_index + 18)
+
+        for row in range(max(0, top_index - 3), min(self.table.rowCount(), bottom_index + 4)):
+            widget = self.table.cellWidget(row, 1)
+            if not isinstance(widget, QtWidgets.QLabel):
+                continue
+            if widget.property('image_loaded'):
+                continue
+            image_path = widget.property('image_path') or ''
+            if not image_path:
+                widget.setText('N/A')
+                widget.setProperty('image_loaded', True)
+                continue
+            pix = QtGui.QPixmap(str(ROOT / str(image_path).replace('/', '\\')))
+            if not pix.isNull():
+                widget.setPixmap(pix.scaled(56, 56, QtCore.Qt.KeepAspectRatio, QtCore.Qt.SmoothTransformation))
+            else:
+                widget.setText('N/A')
+            widget.setProperty('image_loaded', True)
+
     def _update_stats(self):
         stats = get_product_statistics()
         self._stat_labels['total'].setText(str(stats.get('total', 0)))
@@ -2104,11 +2321,9 @@ class AdminWindow(QtWidgets.QMainWindow):
             image_widget = QtWidgets.QLabel()
             image_widget.setAlignment(QtCore.Qt.AlignCenter)
             image_widget.setFixedSize(60, 60)
-            pix = QtGui.QPixmap(str(ROOT / product.get('image_path', '').replace('/', '\\')))
-            if not pix.isNull():
-                image_widget.setPixmap(pix.scaled(56, 56, QtCore.Qt.KeepAspectRatio, QtCore.Qt.SmoothTransformation))
-            else:
-                image_widget.setText('N/A')
+            image_widget.setText('...')
+            image_widget.setProperty('image_path', product.get('image_path', ''))
+            image_widget.setProperty('image_loaded', False)
             self.table.setCellWidget(row, 1, image_widget)
 
             selling_price = float(product.get('selling_price', product.get('price', 0)) or 0)
@@ -2168,6 +2383,7 @@ class AdminWindow(QtWidgets.QMainWindow):
         self._persist_table_layout()
         self._update_stats()
         self._update_selected_count()
+        QtCore.QTimer.singleShot(0, self._load_visible_images)
         self.status_label.setText(f'{len(self.products)} products loaded')
 
     def _selected_product(self):
@@ -2485,19 +2701,8 @@ class AdminWindow(QtWidgets.QMainWindow):
             self._set_selected_products_status('Active', bulk=len(product_ids) > 1)
 
     def import_excel(self):
-        action_dialog = QtWidgets.QMessageBox(self)
-        action_dialog.setWindowTitle('Import Products')
-        action_dialog.setText('Choose an action for product Excel import.')
-        import_btn = action_dialog.addButton('Import Excel', QtWidgets.QMessageBox.AcceptRole)
-        sample_btn = action_dialog.addButton('Download Sample Excel', QtWidgets.QMessageBox.ActionRole)
-        action_dialog.addButton(QtWidgets.QMessageBox.Cancel)
-        action_dialog.exec()
-
-        clicked = action_dialog.clickedButton()
-        if clicked == sample_btn:
-            self.download_import_sample()
-            return
-        if clicked != import_btn:
+        if self._import_in_progress:
+            QtWidgets.QMessageBox.information(self, 'Import Running', 'A product import is already running.')
             return
 
         file_path, _ = QtWidgets.QFileDialog.getOpenFileName(
@@ -2508,17 +2713,103 @@ class AdminWindow(QtWidgets.QMainWindow):
         )
         if not file_path:
             return
-        try:
-            report = import_products_from_excel(file_path)
-            self.refresh_products()
-            self._queue_auto_publish()
-            QtWidgets.QMessageBox.information(
-                self,
-                'Import Completed',
-                f'Added: {report.added}\nUpdated: {report.updated}\nSkipped: {report.skipped}\nErrors: {report.errors}',
-            )
-        except Exception as ex:
-            QtWidgets.QMessageBox.warning(self, 'Import Products', str(ex))
+
+        options_dialog = ImportOptionsDialog(self, auto_publish_default=self.auto_publish_enabled)
+        if options_dialog.exec() != QtWidgets.QDialog.Accepted:
+            return
+        options = options_dialog.options()
+
+        self._import_in_progress = True
+        self._import_auto_publish_requested = bool(options.get('auto_publish_after_import', False))
+        self._import_dialog = ImportProgressDialog(self)
+        self._import_thread = QtCore.QThread(self)
+        self._import_worker = ImportWorker(file_path, options)
+        self._import_worker.moveToThread(self._import_thread)
+
+        self._import_thread.started.connect(self._import_worker.run)
+        self._import_worker.progress.connect(self._on_import_progress)
+        self._import_worker.completed.connect(self._on_import_completed)
+        self._import_worker.cancelled.connect(self._on_import_cancelled)
+        self._import_worker.failed.connect(self._on_import_failed)
+        self._import_worker.completed.connect(self._cleanup_import_thread)
+        self._import_worker.cancelled.connect(self._cleanup_import_thread)
+        self._import_worker.failed.connect(self._cleanup_import_thread)
+
+        self._import_dialog.pauseRequested.connect(self._import_worker.pause)
+        self._import_dialog.resumeRequested.connect(self._import_worker.resume)
+        self._import_dialog.cancelRequested.connect(self._import_worker.cancel)
+        self._import_thread.start()
+        self._import_dialog.show()
+
+    def _cleanup_import_thread(self, *_):
+        self._import_in_progress = False
+        if self._import_thread:
+            self._import_thread.quit()
+            self._import_thread.wait()
+            self._import_thread.deleteLater()
+        if self._import_worker:
+            self._import_worker.deleteLater()
+        self._import_thread = None
+        self._import_worker = None
+
+    def _on_import_progress(self, payload: Dict):
+        if self._import_dialog:
+            self._import_dialog.update_payload(payload)
+
+    def _show_import_summary(self, report):
+        elapsed = int(float(report.elapsed_seconds or 0))
+        speed = 0.0
+        if report.elapsed_seconds and report.elapsed_seconds > 0:
+            speed = float(report.added + report.updated) / float(report.elapsed_seconds)
+        publish_line = 'Website Published.' if (self.auto_publish_enabled and self._import_auto_publish_requested) else 'Website publish skipped.'
+        message = (
+            'Import Successful\n\n'
+            f'Imported: {report.added}\n'
+            f'Updated: {report.updated}\n'
+            f'Skipped: {report.skipped}\n'
+            f'Duplicate: {report.duplicate}\n'
+            f'Errors: {report.errors}\n'
+            f'Time: {elapsed // 60:02d}:{elapsed % 60:02d}\n'
+            f'Average Speed: {speed:.0f} Products/sec\n\n'
+            'Database Optimized.\n'
+            'Catalog Generated.\n'
+            f'{publish_line}'
+        )
+        box = QtWidgets.QMessageBox(self)
+        box.setWindowTitle('Import Summary')
+        box.setText(message)
+        export_btn = box.addButton('Open Report', QtWidgets.QMessageBox.ActionRole)
+        box.addButton(QtWidgets.QMessageBox.Ok)
+        box.exec()
+        if box.clickedButton() == export_btn and report.report_path:
+            QtGui.QDesktopServices.openUrl(QtCore.QUrl.fromLocalFile(report.report_path))
+
+    def _on_import_completed(self, payload: Dict):
+        report = payload.get('report')
+        if self._import_dialog:
+            self._import_dialog.close()
+            self._import_dialog.deleteLater()
+            self._import_dialog = None
+
+        self.refresh_products()
+        self._show_import_summary(report)
+
+        if self.auto_publish_enabled and self._import_auto_publish_requested:
+            QtCore.QTimer.singleShot(0, lambda: self._start_publish('auto'))
+
+    def _on_import_cancelled(self, payload: Dict):
+        if self._import_dialog:
+            self._import_dialog.close()
+            self._import_dialog.deleteLater()
+            self._import_dialog = None
+        QtWidgets.QMessageBox.information(self, 'Import Cancelled', 'Import was cancelled and unfinished rows were rolled back.')
+
+    def _on_import_failed(self, message: str):
+        if self._import_dialog:
+            self._import_dialog.close()
+            self._import_dialog.deleteLater()
+            self._import_dialog = None
+        QtWidgets.QMessageBox.warning(self, 'Import Failed', message)
 
     def download_import_sample(self):
         file_path, _ = QtWidgets.QFileDialog.getSaveFileName(
@@ -2605,6 +2896,11 @@ class AdminWindow(QtWidgets.QMainWindow):
 
     def closeEvent(self, event):
         self._persist_table_layout()
+        if self._import_worker is not None:
+            self._import_worker.cancel()
+        if self._import_thread is not None:
+            self._import_thread.quit()
+            self._import_thread.wait(3000)
         if self._publish_thread is not None:
             self._publish_thread.quit()
             self._publish_thread.wait(3000)

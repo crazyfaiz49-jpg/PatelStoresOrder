@@ -1,18 +1,370 @@
 {
   "products": [
     {
-      "id": "umbrella",
-      "name": "UMBRELLA",
+      "id": "01-umbrella-black",
+      "name": "01 Umbrella Black",
       "category": "General",
-      "price": 250.0,
-      "image": "images/test.jpg",
+      "price": 135.0,
+      "image": "images/placeholder.png",
       "description": ""
     },
     {
-      "id": "utc",
-      "name": "utc",
+      "id": "02-umbrella-color",
+      "name": "02 Umbrella Color",
+      "category": "General",
+      "price": 140.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "basket-square",
+      "name": "BASKET (SQUARE)",
+      "category": "General",
+      "price": 56.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "basket-aristo",
+      "name": "BASKET ARISTO",
+      "category": "General",
+      "price": 290.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "bike-napkin-yellow-rumal",
+      "name": "BIKE NAPKIN YELLOW RUMAL",
+      "category": "General",
+      "price": 10.5,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "bottle-bubble-18-l-with-lid",
+      "name": "BOTTLE BUBBLE 18 L WITH LID",
+      "category": "General",
+      "price": 170.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "bottle-china-sports",
+      "name": "BOTTLE CHINA SPORTS",
+      "category": "General",
+      "price": 110.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "brush-kapda-plastic",
+      "name": "BRUSH KAPDA (PLASTIC)",
+      "category": "General",
+      "price": 14.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "brush-nath-round-zala-broom",
+      "name": "BRUSH NATH ROUND ZALA BROOM",
+      "category": "General",
+      "price": 115.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "brush-nath-zala-v-fan",
+      "name": "BRUSH NATH ZALA V FAN",
+      "category": "General",
+      "price": 115.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "chowk-camel",
+      "name": "CHOWK CAMEL",
+      "category": "General",
+      "price": 16.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "cloth-clip-rishi",
+      "name": "CLOTH CLIP RISHI",
+      "category": "General",
+      "price": 16.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "container-patel-masala-small",
+      "name": "CONTAINER PATEL MASALA SMALL",
+      "category": "General",
+      "price": 16.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "container-spi-oscar-1000",
+      "name": "CONTAINER SPI OSCAR 1000",
+      "category": "General",
+      "price": 20.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "cutlury-stand-spi-capital",
+      "name": "CUTLURY STAND SPI CAPITAL",
+      "category": "General",
+      "price": 15.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "cutlury-stand-spi-cozy-small",
+      "name": "CUTLURY STAND SPI COZY SMALL",
+      "category": "General",
+      "price": 18.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "doormate-bhupesh-welcome-38-58-prime",
+      "name": "DOORMATE BHUPESH WELCOME 38+58 PRIME",
+      "category": "General",
+      "price": 150.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "dori-dolly-plastic-12-no",
+      "name": "DORI DOLLY PLASTIC 12 NO.",
+      "category": "General",
+      "price": 7.5,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "dori-dolly-plastic-15-no",
+      "name": "DORI DOLLY PLASTIC 15 NO.",
+      "category": "General",
+      "price": 16.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "dori-shree-ganesh-ent-14-no",
+      "name": "DORI SHREE GANESH ENT 14 NO",
+      "category": "General",
+      "price": 14.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "dustbin-80l",
+      "name": "DUSTBIN 80L",
+      "category": "General",
+      "price": 800.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "filter-megma-water-filter",
+      "name": "FILTER MEGMA WATER FILTER",
+      "category": "General",
+      "price": 7.5,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "garna-max",
+      "name": "GARNA MAX",
+      "category": "General",
+      "price": 17.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "glass-set-cello-iris",
+      "name": "GLASS SET CELLO IRIS",
+      "category": "General",
+      "price": 170.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "jar-yera-3-kg-glass-barni",
+      "name": "JAR YERA 3 KG ( GLASS BARNI )",
+      "category": "General",
+      "price": 128.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "lock-liza-super-top-35-mm",
+      "name": "LOCK LIZA SUPER TOP 35 MM",
+      "category": "General",
+      "price": 21.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "lock-liza-super-top-50-mm",
+      "name": "LOCK LIZA SUPER TOP 50 MM",
+      "category": "General",
+      "price": 41.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "lock-meibao-padlock-25-mm-china",
+      "name": "LOCK MEIBAO PADLOCK 25 MM (CHINA)",
+      "category": "General",
+      "price": 17.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "lock-meibao-padlock-32-mm-china",
+      "name": "LOCK MEIBAO PADLOCK 32 MM (CHINA)",
+      "category": "General",
+      "price": 32.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "lunch-box-medium",
+      "name": "LUNCH BOX MEDIUM",
+      "category": "General",
+      "price": 17.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "matka-stand-sada",
+      "name": "MATKA STAND (SADA)",
+      "category": "General",
+      "price": 17.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "mop-galaxy-9-clip",
+      "name": "MOP GALAXY 9 CLIP",
+      "category": "General",
+      "price": 79.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "namakdani",
+      "name": "NAMAKDANI",
+      "category": "General",
+      "price": 7.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "notebook-galaxy-aron-200-page-1-pcs",
+      "name": "NOTEBOOK GALAXY ARON ( 200 PAGE ) ( 1 PCS )",
+      "category": "General",
+      "price": 83.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "other-samarth-sopan-pot-stand",
+      "name": "OTHER SAMARTH SOPAN POT STAND",
+      "category": "General",
+      "price": 45.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "pati-bansi-cotton-niwar-90-mtr",
+      "name": "PATI BANSI COTTON NIWAR 90 MTR",
+      "category": "General",
+      "price": 185.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "pinjra-rat-catcher",
+      "name": "PINJRA ( RAT CATCHER )",
       "category": "General",
       "price": 65.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "planter-lily-pot-no-9",
+      "name": "PLANTER LILY POT NO.9",
+      "category": "General",
+      "price": 16.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "planter-s-r-p-green-city-no-10",
+      "name": "PLANTER S.R.P . GREEN CITY NO.10",
+      "category": "General",
+      "price": 20.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "pota-lakdi",
+      "name": "POTA LAKDI",
+      "category": "General",
+      "price": 17.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "radhe-popcorn-bowl",
+      "name": "RADHE POPCORN BOWL",
+      "category": "General",
+      "price": 20.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "soap-case",
+      "name": "SOAP CASE",
+      "category": "General",
+      "price": 8.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "stool-keptan-dining-table-coffee-motto",
+      "name": "STOOL KEPTAN DINING TABLE COFFEE (MOTTO)",
+      "category": "General",
+      "price": 740.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "test",
+      "name": "test",
+      "category": "General",
+      "price": 12.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "veg-rack-patel-square",
+      "name": "VEG. RACK PATEL (SQUARE)",
+      "category": "General",
+      "price": 95.0,
+      "image": "images/placeholder.png",
+      "description": ""
+    },
+    {
+      "id": "water-jug-21-l",
+      "name": "WATER JUG 21 L",
+      "category": "General",
+      "price": 510.0,
       "image": "images/placeholder.png",
       "description": ""
     }
