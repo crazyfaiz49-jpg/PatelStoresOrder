@@ -7,14 +7,6 @@
       "price": 250.0,
       "image": "images/test.jpg",
       "description": ""
-    },
-    {
-      "id": "utc",
-      "name": "utc",
-      "category": "General",
-      "price": 65.0,
-      "image": "images/placeholder.png",
-      "description": ""
     }
   ]
 }
