@@ -473,6 +473,9 @@ class SettingsDialog(QtWidgets.QDialog):
         self.database_path = QtWidgets.QLineEdit(self.settings.get('database_path', 'patelstores.db'))
         self.backup_folder = QtWidgets.QLineEdit(self.settings.get('backup_folder', 'backup'))
         self.website_url = QtWidgets.QLineEdit(self.settings.get('website_url', ''))
+        settings_store = QtCore.QSettings('PatelStores', 'AdminPanel')
+        self.auto_publish_enabled = QtWidgets.QCheckBox('Enable Auto Publish')
+        self.auto_publish_enabled.setChecked(settings_store.value('autopublish.enabled', True, type=bool))
 
         layout.addRow('GitHub Repository', self.github_repo)
         layout.addRow('Branch', self.branch)
@@ -482,6 +485,7 @@ class SettingsDialog(QtWidgets.QDialog):
         layout.addRow('Database', self.database_path)
         layout.addRow('Backup Folder', self.backup_folder)
         layout.addRow('Website URL', self.website_url)
+        layout.addRow('Auto Publish', self.auto_publish_enabled)
 
         buttons = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.Save | QtWidgets.QDialogButtonBox.Cancel)
         buttons.accepted.connect(self._save)
@@ -489,6 +493,8 @@ class SettingsDialog(QtWidgets.QDialog):
         layout.addRow(buttons)
 
     def _save(self):
+        settings_store = QtCore.QSettings('PatelStores', 'AdminPanel')
+        settings_store.setValue('autopublish.enabled', self.auto_publish_enabled.isChecked())
         updated = update_settings(
             {
                 'github_repo': self.github_repo.text().strip(),
@@ -501,8 +507,22 @@ class SettingsDialog(QtWidgets.QDialog):
                 'website_url': self.website_url.text().strip(),
             }
         )
+        updated['auto_publish_enabled'] = self.auto_publish_enabled.isChecked()
         self.saved.emit(updated)
         self.accept()
+
+
+class PublishWorker(QtCore.QObject):
+    progress = QtCore.Signal(int, str)
+    success = QtCore.Signal(dict)
+    failed = QtCore.Signal(str)
+
+    def run(self):
+        try:
+            result = publish_changes(lambda percent, message: self.progress.emit(percent, message))
+            self.success.emit(result)
+        except Exception as ex:
+            self.failed.emit(str(ex))
 
 
 class OrderDialog(QtWidgets.QDialog):
@@ -1357,6 +1377,14 @@ class AdminWindow(QtWidgets.QMainWindow):
         self._quick_filter = 'all'
         self._suspend_check_sync = False
         self._stat_labels = {}
+        self._publish_thread = None
+        self._publish_worker = None
+        self._publish_mode = ''
+        self._publish_pending = False
+        self._publish_retry_timer = QtCore.QTimer(self)
+        self._publish_retry_timer.setInterval(45000)
+        self._publish_retry_timer.timeout.connect(self._retry_auto_publish)
+        self.auto_publish_enabled = self._settings_store().value('autopublish.enabled', True, type=bool)
         self._build_ui()
         self._build_shortcuts()
         self._apply_theme(self.current_theme)
@@ -1868,6 +1896,96 @@ class AdminWindow(QtWidgets.QMainWindow):
         selected = len(self._selected_product_ids())
         self.selected_count_label.setText(f'{selected} Products Selected')
 
+    def _notify(self, message: str, timeout_ms: int = 3500):
+        self.status_label.setText(message)
+        self.statusBar().showMessage(message, timeout_ms)
+
+    def _queue_auto_publish(self):
+        if not self.auto_publish_enabled:
+            return
+        self._publish_pending = True
+        if self._publish_thread is None:
+            self._start_publish('auto')
+
+    def _start_publish(self, mode: str):
+        if self._publish_thread is not None:
+            if mode == 'auto':
+                self._publish_pending = True
+            return
+
+        self._publish_mode = mode
+        if mode == 'auto':
+            self._publish_pending = False
+            self._notify('Publishing changes...')
+            self.progress.setVisible(False)
+        else:
+            self.progress.setVisible(True)
+            self.progress.setValue(0)
+            self._notify('Publishing changes...')
+
+        self._publish_thread = QtCore.QThread(self)
+        self._publish_worker = PublishWorker()
+        self._publish_worker.moveToThread(self._publish_thread)
+        self._publish_thread.started.connect(self._publish_worker.run)
+        self._publish_worker.progress.connect(self._on_publish_progress)
+        self._publish_worker.success.connect(self._on_publish_success)
+        self._publish_worker.failed.connect(self._on_publish_failed)
+        self._publish_worker.success.connect(self._finish_publish_thread)
+        self._publish_worker.failed.connect(self._finish_publish_thread)
+        self._publish_thread.start()
+
+    def _finish_publish_thread(self):
+        if self._publish_thread:
+            self._publish_thread.quit()
+            self._publish_thread.wait()
+        if self._publish_worker:
+            self._publish_worker.deleteLater()
+        if self._publish_thread:
+            self._publish_thread.deleteLater()
+        self._publish_worker = None
+        self._publish_thread = None
+
+    def _on_publish_progress(self, percent: int, message: str):
+        if self._publish_mode == 'manual':
+            self.progress.setValue(percent)
+        self.status_label.setText(message)
+
+    def _on_publish_success(self, result: dict):
+        self.progress.setVisible(False)
+        if self._publish_mode == 'auto':
+            self._notify('Website updated successfully.')
+        else:
+            QtWidgets.QMessageBox.information(
+                self,
+                'Publish Completed',
+                f"Publish successful.\n\nBackup: {result['backup_path']}\nBranch: {result['branch']}\nDetails: {result['commit_output']}",
+            )
+            self._notify('Ready')
+        self._publish_retry_timer.stop()
+        self.refresh_products()
+        if self._publish_pending and self.auto_publish_enabled:
+            self._start_publish('auto')
+
+    def _on_publish_failed(self, error_message: str):
+        logger.exception('Publish failed: %s', error_message)
+        self.progress.setVisible(False)
+        if self._publish_mode == 'auto':
+            self._publish_pending = True
+            self._notify('Changes saved locally. Auto publish will retry later.', timeout_ms=7000)
+            if self.auto_publish_enabled and not self._publish_retry_timer.isActive():
+                self._publish_retry_timer.start()
+        else:
+            QtWidgets.QMessageBox.critical(self, 'Publish Failed', f'Publish failed.\n\n{error_message}')
+            self._notify('Ready')
+        self.refresh_products()
+
+    def _retry_auto_publish(self):
+        if not self.auto_publish_enabled:
+            self._publish_retry_timer.stop()
+            return
+        if self._publish_pending and self._publish_thread is None:
+            self._start_publish('auto')
+
     def _populate_category_filter(self):
         current = self.category_filter.currentText()
         self.category_filter.blockSignals(True)
@@ -2068,6 +2186,7 @@ class AdminWindow(QtWidgets.QMainWindow):
         try:
             create_product(dialog.payload(), dialog.image_source)
             self.refresh_products()
+            self._queue_auto_publish()
         except Exception as ex:
             QtWidgets.QMessageBox.warning(self, 'Add Product', str(ex))
 
@@ -2082,6 +2201,7 @@ class AdminWindow(QtWidgets.QMainWindow):
         try:
             update_product(selected['id'], dialog.payload(), dialog.image_source)
             self.refresh_products()
+            self._queue_auto_publish()
         except Exception as ex:
             QtWidgets.QMessageBox.warning(self, 'Edit Product', str(ex))
 
@@ -2093,6 +2213,7 @@ class AdminWindow(QtWidgets.QMainWindow):
         try:
             duplicate_product(selected['id'])
             self.refresh_products()
+            self._queue_auto_publish()
         except Exception as ex:
             QtWidgets.QMessageBox.warning(self, 'Duplicate Product', str(ex))
 
@@ -2111,6 +2232,7 @@ class AdminWindow(QtWidgets.QMainWindow):
         try:
             delete_product(selected['id'])
             self.refresh_products()
+            self._queue_auto_publish()
         except Exception as ex:
             QtWidgets.QMessageBox.warning(self, 'Delete Product', str(ex))
 
@@ -2143,6 +2265,7 @@ class AdminWindow(QtWidgets.QMainWindow):
         try:
             self._with_busy_dialog('Updating categories...', lambda: bulk_update_products(ids, {'category': category.strip()}))
             self.refresh_products()
+            self._queue_auto_publish()
         except Exception as ex:
             QtWidgets.QMessageBox.warning(self, 'Bulk Category', str(ex))
 
@@ -2156,6 +2279,7 @@ class AdminWindow(QtWidgets.QMainWindow):
         try:
             self._with_busy_dialog('Updating suppliers...', lambda: bulk_update_products(ids, {'supplier': supplier.strip()}))
             self.refresh_products()
+            self._queue_auto_publish()
         except Exception as ex:
             QtWidgets.QMessageBox.warning(self, 'Bulk Supplier', str(ex))
 
@@ -2185,6 +2309,7 @@ class AdminWindow(QtWidgets.QMainWindow):
                 ),
             )
             self.refresh_products()
+            self._queue_auto_publish()
         except Exception as ex:
             QtWidgets.QMessageBox.warning(self, 'Bulk Prices', str(ex))
 
@@ -2201,6 +2326,7 @@ class AdminWindow(QtWidgets.QMainWindow):
         try:
             self._with_busy_dialog('Updating stock...', lambda: bulk_update_products(ids, {'stock': stock, 'min_stock': min_stock}))
             self.refresh_products()
+            self._queue_auto_publish()
         except Exception as ex:
             QtWidgets.QMessageBox.warning(self, 'Bulk Stock', str(ex))
 
@@ -2214,6 +2340,7 @@ class AdminWindow(QtWidgets.QMainWindow):
         try:
             self._with_busy_dialog('Updating GST...', lambda: bulk_update_products(ids, {'gst': gst}))
             self.refresh_products()
+            self._queue_auto_publish()
         except Exception as ex:
             QtWidgets.QMessageBox.warning(self, 'Bulk GST', str(ex))
 
@@ -2232,6 +2359,7 @@ class AdminWindow(QtWidgets.QMainWindow):
         try:
             self._with_busy_dialog('Updating images...', lambda: bulk_update_products(ids, {'image': file_path}))
             self.refresh_products()
+            self._queue_auto_publish()
         except Exception as ex:
             QtWidgets.QMessageBox.warning(self, 'Bulk Image', str(ex))
 
@@ -2250,6 +2378,7 @@ class AdminWindow(QtWidgets.QMainWindow):
         try:
             self._with_busy_dialog('Deleting selected products...', lambda: bulk_delete_products(ids))
             self.refresh_products()
+            self._queue_auto_publish()
         except Exception as ex:
             QtWidgets.QMessageBox.warning(self, 'Bulk Delete', str(ex))
 
@@ -2339,6 +2468,7 @@ class AdminWindow(QtWidgets.QMainWindow):
         try:
             update_products_status(product_ids, status)
             self.refresh_products()
+            self._queue_auto_publish()
         except Exception as ex:
             QtWidgets.QMessageBox.warning(self, 'Update Status', str(ex))
 
@@ -2381,6 +2511,7 @@ class AdminWindow(QtWidgets.QMainWindow):
         try:
             report = import_products_from_excel(file_path)
             self.refresh_products()
+            self._queue_auto_publish()
             QtWidgets.QMessageBox.information(
                 self,
                 'Import Completed',
@@ -2464,36 +2595,19 @@ class AdminWindow(QtWidgets.QMainWindow):
         self.settings = updated
         theme = self.settings.get('theme', self.current_theme)
         self.current_theme = theme
+        self.auto_publish_enabled = bool(updated.get('auto_publish_enabled', self.auto_publish_enabled))
+        if not self.auto_publish_enabled:
+            self._publish_retry_timer.stop()
         self._apply_theme(theme)
 
     def publish(self):
-        self.progress.setVisible(True)
-        self.progress.setValue(0)
-        self.status_label.setText('Publishing...')
-        QtWidgets.QApplication.processEvents()
-
-        try:
-            def progress_cb(percent, message):
-                self.progress.setValue(percent)
-                self.status_label.setText(message)
-                QtWidgets.QApplication.processEvents()
-
-            result = publish_changes(progress_cb)
-            QtWidgets.QMessageBox.information(
-                self,
-                'Publish Completed',
-                f"Publish successful.\n\nBackup: {result['backup_path']}\nBranch: {result['branch']}\nDetails: {result['commit_output']}",
-            )
-        except Exception as ex:
-            logger.exception('Publish failed')
-            QtWidgets.QMessageBox.critical(self, 'Publish Failed', f'Publish failed.\n\n{ex}')
-        finally:
-            self.progress.setVisible(False)
-            self.status_label.setText('Ready')
-            self.refresh_products()
+        self._start_publish('manual')
 
     def closeEvent(self, event):
         self._persist_table_layout()
+        if self._publish_thread is not None:
+            self._publish_thread.quit()
+            self._publish_thread.wait(3000)
         super().closeEvent(event)
 
 
